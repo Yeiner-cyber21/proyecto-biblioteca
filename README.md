@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Grupo** | ✏️ *(nombre o número del grupo)* |
-| **Integrantes** | ✏️ *Nombre 1* · *Nombre 2* · *Nombre 3* · *Nombre 4* |
-| **Entrega actual** | Hito 2, avance de S14: esquema en PostgreSQL y carga masiva desde CSV |
+| **Grupo** | 9 |
+| **Integrantes** | Eisin Yeiner Tobar Bravo · Jeovany |
+| **Entrega actual** | Hito 2: esquema en PostgreSQL, carga masiva desde CSV (S14) y los 4 reportes (S15/S16) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -20,9 +20,9 @@ Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está
 5. [La carga desde CSV](#5-la-carga-desde-csv)
 6. [CSV propio del grupo](#6-csv-propio-del-grupo)
 7. [Prueba de la última línea de defensa](#7-prueba-de-la-última-línea-de-defensa)
-8. [Evidencias](#8-evidencias)
-9. [Lecciones aprendidas](#9-lecciones-aprendidas)
-10. [Pendientes](#10-pendientes)
+8. [Los 4 reportes](#8-los-4-reportes)
+9. [Evidencias](#9-evidencias)
+10. [Lecciones aprendidas](#10-lecciones-aprendidas)
 
 ---
 
@@ -42,13 +42,17 @@ proyecto-biblioteca/
 │   │   ├── carga-libros.sql
 │   │   ├── carga-lectores.sql
 │   │   ├── pruebas-restricciones.sql
+│   │   ├── datos-prestamos.sql      ← bibliotecaria y 30 préstamos de prueba
+│   │   ├── reportes.sql             ← los 4 reportes del proyecto
 │   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
 │   └── data/                        ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json             ← conexión a PostgreSQL precargada en pgAdmin
 ├── node/                            ← API REST (Hito 5)
 ├── docs/
 │   ├── mapeo-y-criterios.md         ← mapeo CSV → esquema y criterios por tipo de error
-│   └── README-entorno-docker.md     ← README original del entorno del profesor
+│   ├── evidencias.md                ← salidas de psql de todas las ejecuciones
+│   ├── README-entorno-docker.md     ← README original del entorno del profesor
+│   └── pendientes.md                ← lo que falta (S15, S16 y los siguientes hitos)
 └── assets/                          ← capturas de las ejecuciones
 ```
 
@@ -72,7 +76,13 @@ docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/le
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propios.csv -f /scripts/carga-libros.sql
 ```
 
-**3. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
+**3. Crear los préstamos de prueba y correr los 4 reportes.** Deben ejecutarse **el mismo día**, porque las fechas de los préstamos son relativas a la fecha en que se crean:
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prestamos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
+```
+
+**4. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
 
 **Reiniciar la base desde cero.** Hace falta cada vez que se cambia `01_esquema.sql` o `02_carga.sql`, porque `init/` solo corre con la base vacía. **Borra todos los datos.**
 ```powershell
@@ -91,6 +101,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 03/11/2026 | Se creó el esquema `carga` (`02_carga.sql`) y el script `carga-libros.sql`. Pruebas: limpio (32 cargadas), con errores (8 rechazadas) y limpio otra vez (0 cargadas): **repetir la carga no duplica**. |
 | 04/11/2026 | Se creó `carga-lectores.sql`: cada lector se reparte en `usuario` + `lector`, con contraseña inicial cifrada con bcrypt. Pruebas: 20 cargadas, 6 rechazadas y 0 al repetir. Con esto, **los 14 errores del curso quedan atrapados**. |
 | 09/11/2026 | Prueba completa desde una base vacía (`init/` crea los dos esquemas solo), carga del CSV propio (5 cargadas, 4 rechazadas), prueba de la última línea de defensa y publicación del repositorio en GitHub. |
+| 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
 
 ## 4. El esquema `biblioteca`
 
@@ -229,44 +240,89 @@ Queda igual (27 antes y 27 después). Los 7 rechazos legítimos de esa corrida *
 
 **Por qué no se comentó la regla de ejemplares negativos (la que sugiere la guía):** se probó, y en nuestro esquema los ejemplares son filas de la tabla `ejemplar`. `generate_series(1, -3)` produce cero filas y no hay ningún `CHECK` que detenga la fila, así que el libro entra **en silencio** con 0 copias. Esto muestra que **donde el esquema no tiene restricción, la validación es la única defensa**.
 
-## 8. Evidencias
+## 8. Los 4 reportes
 
-**Entregables de S14**
+Archivo: [`postgres/scripts/reportes.sql`](postgres/scripts/reportes.sql). Son las consultas del Hito 2, adaptadas del `S15-reportes-demo.sql` del profesor a nuestro esquema.
 
-Carga 1, libros limpio:
+### 8.1 Los datos de prueba
+
+Sin préstamos, los reportes salen vacíos. [`datos-prestamos.sql`](postgres/scripts/datos-prestamos.sql) crea:
+- Una **bibliotecaria** (Andrea Castillo Ruiz), porque todo préstamo exige un `id_bibliotecario`. Su contraseña se guarda con bcrypt.
+- **30 préstamos**: 20 devueltos, 10 abiertos y 5 en mora. Las fechas son relativas a `CURRENT_DATE`, con un plazo de 14 días.
+
+Cada préstamo prueba un caso concreto: un empate en el primer lugar, un lector con 3 préstamos y ninguno devuelto, un préstamo devuelto tarde (estuvo en mora y ya no), uno que vence hoy, un lector con dos préstamos en mora, el mismo título prestado en 4 copias distintas y 12 lectores sin préstamos.
+
+Los datos respetan las reglas de negocio aunque el esquema todavía no las imponga: nadie tiene más de 3 préstamos abiertos, nadie recibió un préstamo estando en mora y ninguna copia se prestó dos veces al mismo tiempo. El script es re-ejecutable: borra sus propios datos y los vuelve a crear.
+
+**Antes de escribir las consultas, se calculó a mano el resultado esperado de cada reporte.** Los 4 reportes coincidieron con lo esperado.
+
+### 8.2 Las consultas
+
+| # | Reporte | Qué hace | Técnica (S15) | Resultado |
+|---|---|---|---|---|
+| 1 | Los 20 libros más prestados | Cuenta los préstamos de cada **libro**, con todas sus copias sumadas, y toma los 20 primeros **con empates** | `LEFT JOIN` + `count(p.id_prestamo)` + `GROUP BY` + `FETCH FIRST 20 ROWS WITH TIES` | **21 filas**: Cien años de soledad (4), 1984 y Harry Potter (3), El principito y Rayuela (2), y 16 libros con 1, empatados en el puesto 20 |
+| 2 | El o los lectores que más han leído | Cuenta los préstamos **devueltos** de cada lector y muestra a **todos** los que tienen el máximo | `WITH` (CTE) + `WHERE fecha_devolucion IS NOT NULL` + subconsulta escalar `= (SELECT max(…))` | **Mariana Gómez y Santiago Rodríguez, con 5** (empate) |
+| 3 | Lectores morosos | Lectores con **al menos un** préstamo sin devolver y ya vencido. Una fila por lector | `EXISTS` con subconsulta correlacionada (∃ del cálculo relacional) | **4 lectores**: Sebastián, Valentina, Juan David y Andrés Felipe |
+| 4 | Préstamos en mora (lista de notificación) | Cada préstamo vencido, con nombre, correo, teléfono, título, copia, fecha de vencimiento y **días de mora** | `JOIN` de `prestamo`, `lector`, `usuario` y `libro`; resta de fechas | **5 préstamos**: de 31 días (Sebastián) a 2 días (Andrés). Juan David aparece **dos veces** |
+
+### 8.3 Decisiones documentadas
+
+- **Reporte 1:**
+  - Se agrupa por **libro** (ISBN), no por copia. Agrupado por copia, *Cien años de soledad* se partiría en 4 filas de 1 préstamo.
+  - Cuentan todos los préstamos, abiertos y devueltos.
+  - Se usa `count(p.id_prestamo)` y no `count(*)`, para que un libro nunca prestado cuente 0 y no 1.
+  - El orden alfabético entre empatados se aplica **afuera** del `WITH TIES`; si se hiciera adentro, rompería el empate.
+- **Reporte 2:**
+  - "Libro leído" = **préstamo devuelto** (sección 3.2 del proyecto). Sin ese filtro, Camila "ganaría" con 6 préstamos, 3 de ellos sin devolver.
+  - Se cuentan préstamos, no títulos distintos.
+  - `= max(…)` y no `LIMIT 1`, porque el enunciado dice "el **o los**".
+- **Reportes 3 y 4:**
+  - Mora = préstamo **abierto** cuya fecha de vencimiento ya pasó, con `<` estricto. Un préstamo que **vence hoy todavía no está en mora**; con `<=`, el reporte 4 mostraría la Rayuela de Juan David con "0 días de mora".
+  - Devolver tarde no deja moroso a nadie.
+  - La mora se **calcula** con las fechas; no se guarda en una columna de estado.
+- **Ventaja del esquema:** como `ejemplar` es una entidad débil cuya clave incluye el ISBN, el préstamo ya trae el ISBN. Por eso los reportes 1 y 4 unen `prestamo` con `libro` directamente, sin pasar por `ejemplar`.
+
+## 9. Evidencias
+
+**Salidas en texto:** [`docs/evidencias.md`](docs/evidencias.md) tiene la salida de `psql`, copiada tal cual de la terminal, de cada ejecución:
+
+| Entregable | Sección de `docs/evidencias.md` |
+|---|---|
+| Arranque desde cero (`init/` crea los dos esquemas) | [1](docs/evidencias.md#1-arranque-desde-cero-init) |
+| **Carga 1: libros limpio** | [2](docs/evidencias.md#2-carga-1-libros-limpio) |
+| **Carga 2: libros con errores** | [3](docs/evidencias.md#3-carga-2-libros-con-errores) |
+| Carga 3: lectores limpio | [4](docs/evidencias.md#4-carga-3-lectores-limpio) |
+| **Carga 4: lectores con errores** | [5](docs/evidencias.md#5-carga-4-lectores-con-errores) |
+| Totales: los 14 rechazos | [6](docs/evidencias.md#6-totales-después-de-las-4-cargas) |
+| **CSV propio** (y su repetición sin duplicar) | [7](docs/evidencias.md#7-csv-propio) |
+| **Prueba de la última línea de defensa** (y la regla restaurada) | [8](docs/evidencias.md#8-prueba-de-la-última-línea-de-defensa) |
+| Préstamos de prueba (dos corridas) | [9](docs/evidencias.md#9-préstamos-de-prueba) |
+| Reportes 1, 2 y 3 | [10](docs/evidencias.md#10-reportes-1-2-y-3) |
+
+**Capturas de pantalla** (en [`assets/`](assets/)). Para las cargas 3 y 4, el CSV propio y la prueba de la última línea de defensa, la evidencia es la salida en texto de la tabla anterior.
+
+Pruebas de restricciones en pgAdmin (las 3 pruebas de S11 y la extra):
+![Pruebas de restricciones en pgAdmin](assets/paso1-pruebas-pgadmin.png)
+
+Carga 1, libros limpio (32 cargadas):
 ![Carga 1: libros limpio](assets/carga1-libros-limpio.png)
 
-Carga 2, libros con errores:
+Carga 2, libros con errores (los 8 errores, cada uno con su motivo):
 ![Carga 2: libros con errores](assets/carga2-libros-errores.png)
 
-Carga 4, lectores con errores:
-![Carga 4: lectores con errores](assets/carga4-lectores-errores.png)
+Carga 1 repetida: las 32 filas salen rechazadas por `isbn ya existe en el catálogo` y los totales no cambian. **Repetir la carga no duplica.**
+![Carga 1 repetida](assets/carga1-libros-limpio-repetida.png)
 
-CSV propio:
-![CSV propio](assets/paso6-csv-propio.png)
+Préstamos de prueba, dos corridas seguidas (`30 | 20 | 10 | 5` las dos veces):
+![Préstamos de prueba](assets/paso6-datos-prestamos.png)
 
-Última línea de defensa, el error del `CHECK`:
-![Última línea de defensa](assets/paso7-error-check.png)
+Reportes 1 y 2:
+![Reportes 1 y 2](assets/paso7-reportes-1-2.png)
 
-**Otras evidencias**
+Reportes 3 y 4:
+![Reportes 3 y 4](assets/paso7-reportes-3-4.png)
 
-Pruebas de restricciones en pgAdmin:
-![Pruebas de restricciones](assets/paso1-pruebas-pgadmin.png)
-
-Log de `init/` con la base vacía:
-![Log de init](assets/paso5-init-log.png)
-
-Carga 3, lectores limpio:
-![Carga 3: lectores limpio](assets/carga3-lectores-limpio.png)
-
-Conteos antes y después de la prueba de la última línea de defensa:
-![Antes](assets/paso7-antes.png)
-![Después](assets/paso7-despues.png)
-
-Regla restaurada:
-![Restaurado](assets/paso7-restaurado.png)
-
-## 9. Lecciones aprendidas
+## 10. Lecciones aprendidas
 
 - **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
 - **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
@@ -274,12 +330,6 @@ Regla restaurada:
 - **`init/` solo corre con la base vacía.** Primero se copia el esquema a `init/` y **después** se levanta PostgreSQL. Para repetir el arranque, se borra `postgres/data/pgdata`.
 - **Codificación:** PowerShell 5.1 muestra mal las tildes de un archivo UTF-8. Se ven bien con `Get-Content -Encoding UTF8`.
 - **Los CSV no se editan con Excel**, porque los guarda con `;`, ni con comandos de PowerShell, porque mezclar finales de línea LF y CRLF hace fallar el `COPY` completo. Se usa VS Code o el Bloc de notas.
+- **Datos de prueba con fechas relativas:** `datos-prestamos.sql` calcula las fechas a partir del día en que se corre. Para que los días de mora de los reportes sean los esperados, se corre **el mismo día** que `reportes.sql`.
 - **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
 - **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.
-
-## 10. Pendientes
-
-- **S15 y S16:** las consultas de los 4 reportes (20 libros más prestados, usuarios que más leen, morosos y notificación de mora) y datos propios de préstamos para que devuelvan resultados.
-- **Hito 3:** análisis de normalización del esquema.
-- **Hito 4:** procedimiento almacenado y trigger, a partir de las reglas que el esquema no garantiza (sección 4).
-- **Hito 5:** roles de PostgreSQL con privilegios mínimos, API REST en Node.js y login con contraseñas bcrypt.

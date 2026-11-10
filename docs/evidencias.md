@@ -446,7 +446,7 @@ COMMIT
 
 ## 10. Reportes 1, 2 y 3
 
-El reporte 4 está en la captura [`../assets/paso7-reporte4.png`](../assets/paso7-reporte4.png).
+Los 4 reportes completos están en las capturas [`../assets/paso7-reportes-1-2.png`](../assets/paso7-reportes-1-2.png) y [`../assets/paso7-reportes-3-4.png`](../assets/paso7-reportes-3-4.png).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
