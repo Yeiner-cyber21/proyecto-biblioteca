@@ -6,7 +6,7 @@
 |---|---|
 | **Grupo** | 9 |
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Jeovany |
-| **Entrega actual** | Hito 2: esquema en PostgreSQL, carga masiva desde CSV (S14) y los 4 reportes (S15/S16) |
+| **Entrega actual** | Hito 2: esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -42,8 +42,9 @@ proyecto-biblioteca/
 │   │   ├── carga-libros.sql
 │   │   ├── carga-lectores.sql
 │   │   ├── pruebas-restricciones.sql
-│   │   ├── datos-prestamos.sql      ← bibliotecaria y 30 préstamos de prueba
-│   │   ├── reportes.sql             ← los 4 reportes del proyecto
+│   │   ├── datos-prueba.sql         ← S16 parte B: bibliotecaria y 30 préstamos que cubren los 8 casos
+│   │   ├── reportes.sql             ← S16 parte B: los 4 reportes (guardados como vistas)
+│   │   ├── verificacion-parte-b.sql ← S16 parte B: tabla de verificación de los 8 casos
 │   │   ├── S16-tienda.sql           ← taller S16: esquema de práctica "tienda" (script del profesor)
 │   │   ├── parte-a.sql              ← taller S16, Parte A: los 11 ejercicios resueltos por el grupo
 │   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
@@ -78,13 +79,21 @@ docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/le
 docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propios.csv -f /scripts/carga-libros.sql
 ```
 
-**3. Crear los préstamos de prueba y correr los 4 reportes.** Deben ejecutarse **el mismo día**, porque las fechas de los préstamos son relativas a la fecha en que se crean:
+**3. Crear los préstamos de prueba, correr los 4 reportes y verificarlos.** Deben ejecutarse **el mismo día y seguidos**, porque las fechas de los préstamos son relativas a la fecha en que se crean. El contenedor usa la hora UTC: a las 7 p. m. de Colombia ya es el día siguiente para PostgreSQL.
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prestamos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
 docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
+```
+La verificación debe mostrar `sí` en las 9 filas.
+
+**4. Taller S16, Parte A** (esquema de práctica `tienda`, independiente de `biblioteca`):
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
 ```
 
-**4. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
+**5. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
 
 **Reiniciar la base desde cero.** Hace falta cada vez que se cambia `01_esquema.sql` o `02_carga.sql`, porque `init/` solo corre con la base vacía. **Borra todos los datos.**
 ```powershell
@@ -105,6 +114,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 08/11/2026 | Taller de consultas de S16 (en curso): se agregó el script del profesor `S16-tienda.sql` (esquema de práctica `tienda`, separado de `biblioteca`) y `parte-a.sql`, con los 11 ejercicios de la Parte A resueltos. Cada ejercicio anota cuántas filas debe devolver, y las 11 coinciden. |
 | 09/11/2026 | Prueba completa desde una base vacía (`init/` crea los dos esquemas solo), carga del CSV propio (5 cargadas, 4 rechazadas), prueba de la última línea de defensa y publicación del repositorio en GitHub. |
 | 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
+| 10/11/2026 | **Cierre del taller S16 (Hito 2).** Se comparó el repositorio con la guía de S16, punto por punto. Cambios: `datos-prestamos.sql` pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía), con el resultado esperado de cada reporte y de los 8 casos escrito en el encabezado; cada reporte de `reportes.sql` lleva su resultado esperado y queda guardado como vista; nuevo `verificacion-parte-b.sql`, que arma la tabla de verificación desde esas vistas. Al revisar los casos se encontró que el caso 6 (préstamo que vence hoy) no se notaba en el reporte 3, porque Juan David ya era moroso por otros préstamos. Ese préstamo pasó a Isabella, que no tiene otro abierto, y los 4 reportes siguieron dando lo mismo. Prueba de control: con `<=` en vez de `<`, la verificación marca el caso 6 como `NO`. En `parte-a.sql` se agregó la respuesta a la pregunta del ejercicio 5. |
 
 ## 4. El esquema `biblioteca`
 
@@ -245,19 +255,19 @@ Queda igual (27 antes y 27 después). Los 7 rechazos legítimos de esa corrida *
 
 ## 8. Los 4 reportes
 
-Archivo: [`postgres/scripts/reportes.sql`](postgres/scripts/reportes.sql). Son las consultas del Hito 2, adaptadas del `S15-reportes-demo.sql` del profesor a nuestro esquema.
+Archivo: [`postgres/scripts/reportes.sql`](postgres/scripts/reportes.sql). Son las consultas del Hito 2, adaptadas del `S15-reportes-demo.sql` del profesor a nuestro esquema. Cada reporte queda guardado como **vista** (`biblioteca.reporte_top_libros`, `reporte_mas_lectores`, `reporte_morosos` y `reporte_prestamos_mora`), como sugiere la guía de S16 para la API de M7.
 
 ### 8.1 Los datos de prueba
 
-Sin préstamos, los reportes salen vacíos. [`datos-prestamos.sql`](postgres/scripts/datos-prestamos.sql) crea:
+Sin préstamos, los reportes salen vacíos. [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) (hasta S15 se llamaba `datos-prestamos.sql`) crea:
 - Una **bibliotecaria** (Andrea Castillo Ruiz), porque todo préstamo exige un `id_bibliotecario`. Su contraseña se guarda con bcrypt.
 - **30 préstamos**: 20 devueltos, 10 abiertos y 5 en mora. Las fechas son relativas a `CURRENT_DATE`, con un plazo de 14 días.
 
-Cada préstamo prueba un caso concreto: un empate en el primer lugar, un lector con 3 préstamos y ninguno devuelto, un préstamo devuelto tarde (estuvo en mora y ya no), uno que vence hoy, un lector con dos préstamos en mora, el mismo título prestado en 4 copias distintas y 12 lectores sin préstamos.
+Cada préstamo prueba un caso concreto: un empate en el primer lugar, un lector con 2 préstamos abiertos y ninguno devuelto, un préstamo devuelto tarde (estuvo en mora y ya no), uno que vence hoy, un lector con dos préstamos en mora, el mismo título prestado en 4 copias distintas, 16 libros y 12 lectores sin préstamos. La correspondencia con los 8 casos de la guía está en la [tabla de verificación](#846-tabla-de-verificación-de-la-parte-b).
 
 Los datos respetan las reglas de negocio aunque el esquema todavía no las imponga: nadie tiene más de 3 préstamos abiertos, nadie recibió un préstamo estando en mora y ninguna copia se prestó dos veces al mismo tiempo. El script es re-ejecutable: borra sus propios datos y los vuelve a crear.
 
-**Antes de escribir las consultas, se calculó a mano el resultado esperado de cada reporte.** Los 4 reportes coincidieron con lo esperado.
+**Antes de escribir las consultas, se calculó a mano el resultado esperado de cada reporte.** Quedó escrito en el encabezado de `datos-prueba.sql` y encima de cada reporte en `reportes.sql`. Los 4 reportes coincidieron con lo esperado.
 
 ### 8.2 Las consultas
 
@@ -273,35 +283,92 @@ Los datos respetan las reglas de negocio aunque el esquema todavía no las impon
 - **Reporte 1:**
   - Se agrupa por **libro** (ISBN), no por copia. Agrupado por copia, *Cien años de soledad* se partiría en 4 filas de 1 préstamo.
   - Cuentan todos los préstamos, abiertos y devueltos.
-  - Se usa `count(p.id_prestamo)` y no `count(*)`, para que un libro nunca prestado cuente 0 y no 1.
+  - **Libros sin préstamos:** entran al conteo con 0 gracias al `LEFT JOIN`. Se usa `count(p.id_prestamo)` y no `count(*)`, para que un libro nunca prestado cuente 0 y no 1. Con los datos de prueba no se ven en el reporte, porque hay 21 libros con al menos un préstamo; solo aparecerían si menos de 20 libros tuvieran préstamos.
   - El orden alfabético entre empatados se aplica **afuera** del `WITH TIES`; si se hiciera adentro, rompería el empate.
 - **Reporte 2:**
   - "Libro leído" = **préstamo devuelto** (sección 3.2 del proyecto). Sin ese filtro, Camila "ganaría" con 6 préstamos, 3 de ellos sin devolver.
   - Se cuentan préstamos, no títulos distintos.
   - `= max(…)` y no `LIMIT 1`, porque el enunciado dice "el **o los**".
 - **Reportes 3 y 4:**
-  - Mora = préstamo **abierto** cuya fecha de vencimiento ya pasó, con `<` estricto. Un préstamo que **vence hoy todavía no está en mora**; con `<=`, el reporte 4 mostraría la Rayuela de Juan David con "0 días de mora".
+  - Mora = préstamo **abierto** cuya fecha de vencimiento ya pasó, con `<` estricto. Un préstamo que **vence hoy todavía no está en mora**; con `<=`, Isabella aparecería como morosa en el reporte 3 y su Rayuela saldría en el reporte 4 con "0 días de mora".
   - Devolver tarde no deja moroso a nadie.
   - La mora se **calcula** con las fechas; no se guarda en una columna de estado.
 - **Ventaja del esquema:** como `ejemplar` es una entidad débil cuya clave incluye el ISBN, el préstamo ya trae el ISBN. Por eso los reportes 1 y 4 unen `prestamo` con `libro` directamente, sin pasar por `ejemplar`.
 
-### 8.4 Taller de consultas de S16 (en curso)
+### 8.4 Taller de consultas de S16 (cierre del Hito 2)
 
-Además de los 4 reportes, S16 incluye un taller de consultas sobre un esquema de práctica que entrega el profesor: una tienda en línea de café, con clientes, productos y pedidos. Vive en su propio esquema, `tienda`, así que **no toca** el esquema `biblioteca`.
+El taller tiene dos partes. La **parte A** son 11 ejercicios sobre un esquema de práctica del profesor, una tienda en línea de café, que vive en su propio esquema (`tienda`) y **no toca** `biblioteca`. La **parte B** son los 4 reportes del proyecto sobre nuestro esquema, con datos de prueba que demuestran que son correctos.
+
+#### 8.4.1 Entregable de la guía y dónde quedó
+
+| # | La guía pide | Dónde quedó |
+|---|---|---|
+| 1 | `parte-a.sql`: las 11 consultas, cada una con su número y, en la 9, la explicación | [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) |
+| 2 | `datos-prueba.sql` y `reportes.sql`, en `postgres/scripts/` | [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) y [`reportes.sql`](postgres/scripts/reportes.sql) |
+| 3 | Tabla de verificación de la parte B: caso, esperado, obtenido y qué se corrigió | [Sección 8.4.6](#846-tabla-de-verificación-de-la-parte-b), generada por [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) |
+| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 10 y 11, y las capturas de la sección 9 |
+
+#### 8.4.2 Parte A: ejercicios sobre `tienda`
 
 | Archivo | Qué es |
 |---|---|
 | [`postgres/scripts/S16-tienda.sql`](postgres/scripts/S16-tienda.sql) | Script del profesor: crea el esquema `tienda` con sus datos. Es re-ejecutable. |
-| [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) | **Parte A**, resuelta por el grupo: 11 ejercicios. Cada uno explica su técnica y cuántas filas debe devolver. |
+| [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) | Los 11 ejercicios resueltos por el grupo. Cada uno explica su técnica y cuántas filas debe devolver. |
 
-Los ejercicios de la Parte A practican: joins de varias tablas, self-join con `LEFT JOIN` (quién refirió a quién), anti-join (productos nunca vendidos), contar ceros con `count(columna)`, `GROUP BY` con `HAVING`, subconsulta correlacionada, `EXISTS`, la trampa de `NOT IN` con `NULL` (y su corrección con `NOT EXISTS`), el máximo con empates y la división con `NOT EXISTS` doble.
+Los ejercicios practican: joins de varias tablas, self-join con `LEFT JOIN` (quién refirió a quién), anti-join (productos nunca vendidos), contar ceros con `count(columna)`, `GROUP BY` con `HAVING`, subconsulta correlacionada, `EXISTS`, la trampa de `NOT IN` con `NULL` (y su corrección con `NOT EXISTS`), el máximo con empates y la división con `NOT EXISTS` doble.
 
-**Cómo ejecutarlo:**
-```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
-```
-Los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql`.
+**Resultado:** los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql` (comandos en la sección 2, paso 4).
+
+#### 8.4.3 Parte A: las preguntas de la sesión
+
+- **Ejercicio 5. ¿Qué pasa si se olvida el filtro de cancelados?** Los totales suben y **Accesorio** pasa al primer lugar: 621 000 frente a 562 000 de Grano, porque los pedidos cancelados traían el molino (150 000) y la prensa (95 000). Con el filtro, el orden es Grano 480 000, Accesorio 376 000 y Molido 184 000. Por capas: el `FROM` con los dos `JOIN` da 23 filas (una por línea de detalle), el `WHERE` deja 19 y el `GROUP BY`, 3.
+- **Ejercicio 9. ¿Por qué el `NOT IN` devuelve 0 filas?** La subconsulta trae los `referido_por`, y los clientes que llegaron solos tienen `NULL`. `x NOT IN (1, 3, 4, NULL)` equivale a `x <> 1 AND x <> 3 AND x <> 4 AND x <> NULL`, y comparar con `NULL` da *desconocido*. El `AND` completo nunca llega a ser verdadero, y el `WHERE` solo deja pasar lo verdadero: descarta todas las filas sin dar error. **Corrección:** `NOT EXISTS` (una fila con `referido_por` `NULL` simplemente no coincide), o filtrar `WHERE referido_por IS NOT NULL` dentro de la subconsulta. Da 5 filas.
+- **Ejercicio 11. ¿Por qué da exactamente los que compraron todos? ¿Qué pasa con Andrés?** "Compró todos los productos de Grano" se reescribe como "no existe un producto de Grano que no haya comprado" (`NOT EXISTS` doble). Salen Felipe y Laura. Andrés compró el Huila en un pedido enviado, pero el Nariño y el Cauca solo en el pedido **cancelado** 1013. Como el filtro de cancelados está en la subconsulta interna, esa compra no cuenta y Andrés no sale. **Si se olvida el filtro, la consulta da 3 filas y Andrés aparece** (comprobado en PostgreSQL).
+- **Retos R1 a R3:** son opcionales y no suman a la rúbrica. No se hicieron (quedan en [`docs/pendientes.md`](docs/pendientes.md)).
+
+#### 8.4.4 Parte B: qué cambia en nuestro esquema respecto a `reportes_demo`
+
+Las 4 preguntas de la sección 3 de la guía, respondidas antes de escribir los reportes:
+
+| Pregunta | En nuestro esquema |
+|---|---|
+| ¿El préstamo apunta al libro o a un ejemplar? | A un **ejemplar** (`isbn`, `numero_copia`). Como la clave del ejemplar incluye el ISBN, `prestamo` ya trae el `isbn`: se une con `libro` directamente, sin pasar por `ejemplar`, y se agrupa por libro. |
+| ¿El nombre y el correo del lector están en `lector` o en `usuario`? | En **`usuario`**. El teléfono está en `lector`. El reporte 4 une `prestamo` → `lector` → `usuario`. |
+| ¿Hay una columna de estado, o todo se calcula con fechas? | **Con fechas.** Abierto = `fecha_devolucion IS NULL`; en mora = abierto y `fecha_vencimiento < CURRENT_DATE`. |
+| ¿Dónde está la fecha esperada de devolución? | En **`prestamo.fecha_vencimiento`**. Los datos de prueba la llenan con `fecha_prestamo + 14`. |
+
+#### 8.4.5 Parte B: archivos
+
+| Archivo | Qué hace |
+|---|---|
+| [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) | Una bibliotecaria y 30 préstamos con fechas relativas a `CURRENT_DATE`. El encabezado tiene el **resultado esperado** de cada reporte y de cada caso, escrito antes de correr nada. |
+| [`reportes.sql`](postgres/scripts/reportes.sql) | Los 4 reportes. Encima de cada uno: qué devuelve, sus decisiones y el resultado esperado. Cada uno queda guardado como vista. |
+| [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) | Lee las 4 vistas y compara, caso por caso, lo esperado con lo obtenido. No repite la lógica de los reportes: prueba exactamente esas consultas. |
+
+#### 8.4.6 Tabla de verificación de la parte B
+
+Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió antes de correr los reportes; "obtenido" es la salida de `verificacion-parte-b.sql` ([evidencia](docs/evidencias.md#11-verificación-de-la-parte-b)).
+
+| # | Caso | Reporte | Dato de prueba | Esperado | Obtenido | ¿Coincidió? / qué se corrigió |
+|---|---|---|---|---|---|---|
+| 1 | Libro que nadie ha prestado | R1 | 16 libros sin préstamos, entre ellos *El olvido que seremos* | Cuenta 0, pero queda fuera del top: hay 21 libros con al menos un préstamo | Cuenta 0; fuera del top | ✅ Sí. La decisión quedó escrita en el encabezado del reporte 1. |
+| 2 | Dos libros empatados en el último puesto | R1 | 16 libros con 1 préstamo, en los puestos 6 a 21 | 21 filas: sale también el empatado del puesto 21 | 21 filas; 16 empatados con 1 | ✅ Sí |
+| 3 | Dos lectores empatados en el primer lugar | R2 | Mariana y Santiago, 5 préstamos devueltos cada uno | Salen los dos | Mariana y Santiago, 5 | ✅ Sí |
+| 4 | Lector con varios préstamos abiertos y ninguno devuelto | R2 | Juan David (2 abiertos, 0 devueltos) y Camila (6 préstamos, 3 devueltos) | No sale ninguno | No sale ninguno | ✅ Sí. La regla de máximo 3 préstamos abiertos impide que un lector sin devoluciones tenga más préstamos que los ganadores (5). Por eso Camila cubre la parte de "más préstamos que los ganadores". |
+| 5 | Préstamo devuelto después de la fecha esperada | R3, R4 | Santiago devolvió el Quijote 6 días tarde | No es mora: 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | ✅ Sí |
+| 6 | Préstamo abierto que vence hoy | R3, R4 | Isabella: la Rayuela, su único préstamo abierto | Regla `<`: no es mora; 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | ✅ Sí, **después de corregir los datos.** El préstamo era de Juan David, que ya sale en R3 por otros dos préstamos, así que en R3 el caso no se notaba. Se pasó a Isabella. Prueba de control: con `<=`, la verificación da `R3: 1 · R4: 1` y marca `NO`. |
+| 7 | Lector con dos préstamos en mora | R3, R4 | Juan David: *Cien años de soledad* (13 días) y *1984* (6 días) | 1 vez en R3 y 2 veces en R4 | R3: 1 · R4: 2 | ✅ Sí |
+| 8 | Lector sin ningún préstamo | Todos | 12 lectores (documentos 1000000009 a 1000000020) | No aparecen en R2, R3 ni R4 | 12 lectores; R2: 0 · R3: 0 · R4: 0 | ✅ Sí |
+| — | Total de filas | R1 a R4 | — | 21 · 2 · 4 · 5 | 21 · 2 · 4 · 5 | ✅ Sí |
+
+#### 8.4.7 Checkpoint del Hito 2
+
+| Pieza | Dónde quedó | Sesión | Estado |
+|---|---|---|---|
+| Esquema que corre limpio desde `postgres/init/` con la base vacía | `postgres/init/01_esquema.sql` (y `02_carga.sql`) | S14 | ✅ |
+| Carga de libros y lectores desde CSV, con el semilla y con un CSV propio | `postgres/scripts/carga-*.sql` y `postgres/scripts/datos/` | S14 | ✅ |
+| Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md) | S14 | ✅ |
+| Las consultas de los 4 reportes, documentadas | `postgres/scripts/reportes.sql` y `datos-prueba.sql` | S16 | ✅ |
 
 ## 9. Evidencias
 
@@ -318,7 +385,8 @@ Los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (
 | **CSV propio** (y su repetición sin duplicar) | [7](docs/evidencias.md#7-csv-propio) |
 | **Prueba de la última línea de defensa** (y la regla restaurada) | [8](docs/evidencias.md#8-prueba-de-la-última-línea-de-defensa) |
 | Préstamos de prueba (dos corridas) | [9](docs/evidencias.md#9-préstamos-de-prueba) |
-| Reportes 1, 2 y 3 | [10](docs/evidencias.md#10-reportes-1-2-y-3) |
+| **Los 4 reportes con los datos de prueba** (S16, parte B) | [10](docs/evidencias.md#10-los-4-reportes) |
+| **Tabla de verificación de la parte B** (S16) | [11](docs/evidencias.md#11-verificación-de-la-parte-b) |
 
 **Capturas de pantalla** (en [`assets/`](assets/)). Para las cargas 3 y 4, el CSV propio y la prueba de la última línea de defensa, la evidencia es la salida en texto de la tabla anterior.
 
@@ -334,10 +402,10 @@ Carga 2, libros con errores (los 8 errores, cada uno con su motivo):
 Carga 1 repetida: las 32 filas salen rechazadas por `isbn ya existe en el catálogo` y los totales no cambian. **Repetir la carga no duplica.**
 ![Carga 1 repetida](assets/carga1-libros-limpio-repetida.png)
 
-Préstamos de prueba, dos corridas seguidas (`30 | 20 | 10 | 5` las dos veces):
+Préstamos de prueba, dos corridas seguidas (`30 | 20 | 10 | 5` las dos veces). La captura es de cuando el script se llamaba `datos-prestamos.sql`; `datos-prueba.sql` da exactamente el mismo resumen:
 ![Préstamos de prueba](assets/paso6-datos-prestamos.png)
 
-Reportes 1 y 2:
+Reportes 1 y 2 (los resultados no cambiaron con los ajustes de S16; ver [`docs/evidencias.md`](docs/evidencias.md#10-los-4-reportes)):
 ![Reportes 1 y 2](assets/paso7-reportes-1-2.png)
 
 Reportes 3 y 4:
@@ -351,6 +419,7 @@ Reportes 3 y 4:
 - **`init/` solo corre con la base vacía.** Primero se copia el esquema a `init/` y **después** se levanta PostgreSQL. Para repetir el arranque, se borra `postgres/data/pgdata`.
 - **Codificación:** PowerShell 5.1 muestra mal las tildes de un archivo UTF-8. Se ven bien con `Get-Content -Encoding UTF8`.
 - **Los CSV no se editan con Excel**, porque los guarda con `;`, ni con comandos de PowerShell, porque mezclar finales de línea LF y CRLF hace fallar el `COPY` completo. Se usa VS Code o el Bloc de notas.
-- **Datos de prueba con fechas relativas:** `datos-prestamos.sql` calcula las fechas a partir del día en que se corre. Para que los días de mora de los reportes sean los esperados, se corre **el mismo día** que `reportes.sql`.
+- **Datos de prueba con fechas relativas:** `datos-prueba.sql` calcula las fechas a partir del día en que se corre. Para que los días de mora de los reportes sean los esperados, se corre **el mismo día** que `reportes.sql`. Ojo: el contenedor usa la hora UTC, así que desde las 7 p. m. de Colombia PostgreSQL ya está en el día siguiente.
+- **Un caso de prueba solo prueba algo si puede fallar.** El préstamo que "vence hoy" no se notaba en el reporte 3 porque su lector ya era moroso por otros préstamos: con `<` o con `<=` el reporte salía igual. Se aisló en una lectora sin otros préstamos abiertos, y se comprobó cambiando `<` por `<=` a propósito: la verificación lo detectó.
 - **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
 - **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.

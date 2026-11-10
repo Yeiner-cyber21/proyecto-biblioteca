@@ -72,6 +72,13 @@ ORDER BY pedidos DESC, c.nombre;
 -- ---------------------------------------------------------------
 -- Ejercicio 5. Total vendido por categoría, sin cancelados.
 -- Filas esperadas: 3.
+-- Construida por capas: el FROM con los dos JOIN da 23 filas (una por
+-- línea de detalle); con el WHERE quedan 19; el GROUP BY las deja en 3.
+-- Pregunta del encuadre: ¿y si se olvida el filtro de cancelados? Los
+-- totales suben y Accesorio pasa al primer lugar: 621000 frente a 562000
+-- de Grano, porque los pedidos cancelados traían el molino (150000) y la
+-- prensa (95000). Con el filtro, el orden es Grano 480000, Accesorio
+-- 376000 y Molido 184000.
 -- ---------------------------------------------------------------
 \echo '== Ejercicio 5 (esperadas: 3) =='
 SELECT   pr.categoria, sum(d.cantidad * d.precio_unitario) AS total

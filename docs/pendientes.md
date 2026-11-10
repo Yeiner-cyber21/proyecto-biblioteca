@@ -2,11 +2,28 @@
 
 **750006C Bases de Datos · Universidad del Valle · Grupo 9**
 
-Lista de trabajo que **todavía no se ha hecho**. Lo ya entregado (S14 y los 4 reportes de S15/S16) está documentado en el [README](../README.md).
+Lista de trabajo que **todavía no se ha hecho**. Lo ya entregado (S14, los 4 reportes y el taller de S16) está documentado en el [README](../README.md).
+
+## Para cerrar la entrega del Hito 2 (S16)
+
+El código y la documentación del taller S16 están completos (README, sección 8.4). Falta solo la entrega:
+
+- [ ] Correr en Docker, seguidos y el mismo día: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`. La verificación debe dar `sí` en las 9 filas.
+- [ ] Hacer `git push` a la rama `main`.
+- [ ] Invitar al profesor como colaborador del repositorio privado (*Settings → Collaborators*). Sin eso, no puede ver el repositorio.
+- [ ] Subir al campus un `.txt` con el enlace del repositorio.
+
+## Opcional (no suma a la rúbrica)
+
+| Qué | Detalle |
+|---|---|
+| Retos R1 a R3 del taller S16 | R1: el ejercicio 11 con `GROUP BY` + `HAVING count(…) = …` (y por qué `count(*)` no da lo mismo que `count(DISTINCT …)`); R2: las dos versiones del 11 con una categoría sin productos; R3: comparar lo que gastó cada cliente referido con lo que gastó quien lo refirió. |
+| Capturas nuevas de S16 | Captura de `verificacion-parte-b.sql`. Las capturas de los reportes (`assets/paso7-*.png`) siguen siendo válidas, porque los resultados no cambiaron. |
+
+## Siguientes hitos
 
 | Cuándo | Qué falta |
 |---|---|
-| **S16** | Terminar el taller de consultas sobre el esquema `tienda`. La Parte A ya está en `postgres/scripts/parte-a.sql`; faltan las partes siguientes, si la guía las pide. Los 4 reportes del Hito 2 ya están en `postgres/scripts/reportes.sql`. |
-| **Hito 3** | Análisis de normalización del esquema (mínimo 3FN), con sus dependencias funcionales. |
+| **Hito 3** (M5, S17 a S20) | Análisis de normalización del esquema (mínimo 3FN), con sus dependencias funcionales. |
 | **Hito 4** | Procedimiento almacenado y trigger, a partir de las reglas que el esquema no garantiza (README, sección 4): máximo 3 préstamos activos, no prestar a un lector en mora, coherencia de perfiles, etc. |
-| **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js (incluido el reporte 4 como lista con el botón "Enviar notificación") y login con contraseñas bcrypt. |
+| **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js y login con contraseñas bcrypt. La API puede leer los reportes de las 4 vistas que ya crea `reportes.sql` (por ejemplo, `biblioteca.reporte_prestamos_mora` para la lista con el botón "Enviar notificación"). |

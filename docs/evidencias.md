@@ -1,6 +1,6 @@
 # Evidencias de ejecución
 
-Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`../assets/`](../assets/).
+Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. Las salidas de S16 que no vienen de esa terminal (el reporte 4 en texto y la verificación de la parte B, secciones 10 y 11) lo dicen en su sección. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`../assets/`](../assets/).
 
 ## Contenido
 
@@ -13,7 +13,8 @@ Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejec
 7. [CSV propio](#7-csv-propio)
 8. [Prueba de la última línea de defensa](#8-prueba-de-la-última-línea-de-defensa)
 9. [Préstamos de prueba](#9-préstamos-de-prueba)
-10. [Reportes 1, 2 y 3](#10-reportes-1-2-y-3)
+10. [Los 4 reportes](#10-los-4-reportes)
+11. [Verificación de la parte B](#11-verificación-de-la-parte-b)
 
 ---
 
@@ -408,6 +409,8 @@ COMMIT
 
 ## 9. Préstamos de prueba
 
+> En S16 el script pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía) y el préstamo que vence hoy pasó de Juan David a Isabella. El resumen sigue siendo `30 | 20 | 10 | 5`.
+
 Dos corridas seguidas de `datos-prestamos.sql`: da lo mismo, así que **se puede repetir**. Los `DELETE` del inicio son los datos de la corrida anterior, que el script borra antes de volver a crearlos.
 
 ```text
@@ -444,9 +447,9 @@ COMMIT
 (1 row)
 ```
 
-## 10. Reportes 1, 2 y 3
+## 10. Los 4 reportes
 
-Los 4 reportes completos están en las capturas [`../assets/paso7-reportes-1-2.png`](../assets/paso7-reportes-1-2.png) y [`../assets/paso7-reportes-3-4.png`](../assets/paso7-reportes-3-4.png).
+Los 4 reportes completos están en las capturas [`../assets/paso7-reportes-1-2.png`](../assets/paso7-reportes-1-2.png) y [`../assets/paso7-reportes-3-4.png`](../assets/paso7-reportes-3-4.png). Abajo, los reportes 1, 2 y 3 en texto, copiados de la terminal del grupo. Los cambios de S16 (encabezados con el resultado esperado, las vistas y el préstamo de Isabella) **no cambiaron ninguna fila**: con `datos-prueba.sql` y el `reportes.sql` final, los 4 reportes dan las mismas 21, 2, 4 y 5 filas.
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
@@ -496,3 +499,51 @@ Pager usage is off.
  1000000008 | Andrés Felipe | Vargas Ortiz
 (4 rows)
 ```
+
+El reporte 4 en texto. Es la salida de `psql` (PostgreSQL 16) del 10/11/2026, con los scripts finales de S16 corridos en este orden: cargas, `datos-prueba.sql` y `reportes.sql`. Las fechas de vencimiento dependen del día en que se corre `datos-prueba.sql`; los días de mora, no.
+
+```text
+== Reporte 4. Préstamos en mora (lista de notificación) ==
+           lector           |                  correo                  |  telefono  |        titulo        | copia | fecha_vencimiento | dias_mora 
+----------------------------+------------------------------------------+------------+----------------------+-------+-------------------+-----------
+ Sebastián González Morales | sebastian.gonzalez@correo-ejemplo.edu.co | 3001000006 | Crimen y castigo     |     1 | 2026-10-10        |        31
+ Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | Cien años de soledad |     4 | 2026-10-28        |        13
+ Valentina López Díaz       | valentina.lopez@correo-ejemplo.edu.co    | 3001000003 | La sombra del viento |     1 | 2026-11-03        |         7
+ Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | 1984                 |     3 | 2026-11-04        |         6
+ Andrés Felipe Vargas Ortiz | andres.vargas@correo-ejemplo.edu.co      | 3001000008 | El nombre del viento |     1 | 2026-11-08        |         2
+(5 rows)
+```
+
+## 11. Verificación de la parte B
+
+Salida de `verificacion-parte-b.sql` (PostgreSQL 16, 10/11/2026), justo después de `datos-prueba.sql` y `reportes.sql`. Las 9 filas coinciden con lo esperado. Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
+
+```text
+docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
+```
+
+```text
+== Verificación de la parte B: los 8 casos de prueba de la guía S16 ==
+ caso  |  reporte   |                      prueba                       |              esperado              |              obtenido              | coincide 
+-------+------------+---------------------------------------------------+------------------------------------+------------------------------------+----------
+ 1     | R1         | Libro sin préstamos (El olvido que seremos)       | cuenta 0; fuera del top            | cuenta 0; fuera del top            | sí
+ 2     | R1         | Empate en el último puesto del top                | 21 filas; 16 empatados con 1       | 21 filas; 16 empatados con 1       | sí
+ 3     | R2         | Empate en el primer lugar                         | Mariana y Santiago, 5              | Mariana y Santiago, 5              | sí
+ 4     | R2         | Juan David (sin devueltos) y Camila (6 préstamos) | no sale ninguno                    | no sale ninguno                    | sí
+ 5     | R3, R4     | Santiago devolvió el Quijote 6 días tarde         | R3: 0 · R4: 0                      | R3: 0 · R4: 0                      | sí
+ 6     | R3, R4     | Isabella: su préstamo vence hoy (regla <)         | R3: 0 · R4: 0                      | R3: 0 · R4: 0                      | sí
+ 7     | R3, R4     | Juan David: dos préstamos en mora                 | R3: 1 · R4: 2                      | R3: 1 · R4: 2                      | sí
+ 8     | R2, R3, R4 | Lectores sin ningún préstamo                      | 12 lectores; R2: 0 · R3: 0 · R4: 0 | 12 lectores; R2: 0 · R3: 0 · R4: 0 | sí
+ total | R1 a R4    | Filas de cada reporte                             | 21 · 2 · 4 · 5                     | 21 · 2 · 4 · 5                     | sí
+(9 rows)
+```
+
+**Prueba de control.** Se cambió a propósito `<` por `<=` en los reportes 3 y 4 y se volvió a correr la verificación. El caso 6 dejó de coincidir, como debía: la verificación sí detecta un error en la regla de mora.
+
+```text
+ 6     | R3, R4     | Isabella: su préstamo vence hoy (regla <)         | R3: 0 · R4: 0                      | R3: 1 · R4: 1                      | NO
+ 7     | R3, R4     | Juan David: dos préstamos en mora                 | R3: 1 · R4: 2                      | R3: 1 · R4: 2                      | sí
+ total | R1 a R4    | Filas de cada reporte                             | 21 · 2 · 4 · 5                     | 21 · 2 · 5 · 6                     | NO
+```
+
+Después se restauró `<` y las 9 filas volvieron a coincidir.
