@@ -44,6 +44,8 @@ proyecto-biblioteca/
 │   │   ├── pruebas-restricciones.sql
 │   │   ├── datos-prestamos.sql      ← bibliotecaria y 30 préstamos de prueba
 │   │   ├── reportes.sql             ← los 4 reportes del proyecto
+│   │   ├── S16-tienda.sql           ← taller S16: esquema de práctica "tienda" (script del profesor)
+│   │   ├── parte-a.sql              ← taller S16, Parte A: los 11 ejercicios resueltos por el grupo
 │   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
 │   └── data/                        ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json             ← conexión a PostgreSQL precargada en pgAdmin
@@ -100,6 +102,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 02/11/2026 | Se documentaron el mapeo CSV → esquema y los criterios por tipo de error (`docs/mapeo-y-criterios.md`): 6 principios, los 14 errores del curso y 18 casos propios. Se detectó una discrepancia en los datos del curso (fila `…034`). |
 | 03/11/2026 | Se creó el esquema `carga` (`02_carga.sql`) y el script `carga-libros.sql`. Pruebas: limpio (32 cargadas), con errores (8 rechazadas) y limpio otra vez (0 cargadas): **repetir la carga no duplica**. |
 | 04/11/2026 | Se creó `carga-lectores.sql`: cada lector se reparte en `usuario` + `lector`, con contraseña inicial cifrada con bcrypt. Pruebas: 20 cargadas, 6 rechazadas y 0 al repetir. Con esto, **los 14 errores del curso quedan atrapados**. |
+| 08/11/2026 | Taller de consultas de S16 (en curso): se agregó el script del profesor `S16-tienda.sql` (esquema de práctica `tienda`, separado de `biblioteca`) y `parte-a.sql`, con los 11 ejercicios de la Parte A resueltos. Cada ejercicio anota cuántas filas debe devolver, y las 11 coinciden. |
 | 09/11/2026 | Prueba completa desde una base vacía (`init/` crea los dos esquemas solo), carga del CSV propio (5 cargadas, 4 rechazadas), prueba de la última línea de defensa y publicación del repositorio en GitHub. |
 | 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
 
@@ -281,6 +284,24 @@ Los datos respetan las reglas de negocio aunque el esquema todavía no las impon
   - Devolver tarde no deja moroso a nadie.
   - La mora se **calcula** con las fechas; no se guarda en una columna de estado.
 - **Ventaja del esquema:** como `ejemplar` es una entidad débil cuya clave incluye el ISBN, el préstamo ya trae el ISBN. Por eso los reportes 1 y 4 unen `prestamo` con `libro` directamente, sin pasar por `ejemplar`.
+
+### 8.4 Taller de consultas de S16 (en curso)
+
+Además de los 4 reportes, S16 incluye un taller de consultas sobre un esquema de práctica que entrega el profesor: una tienda en línea de café, con clientes, productos y pedidos. Vive en su propio esquema, `tienda`, así que **no toca** el esquema `biblioteca`.
+
+| Archivo | Qué es |
+|---|---|
+| [`postgres/scripts/S16-tienda.sql`](postgres/scripts/S16-tienda.sql) | Script del profesor: crea el esquema `tienda` con sus datos. Es re-ejecutable. |
+| [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) | **Parte A**, resuelta por el grupo: 11 ejercicios. Cada uno explica su técnica y cuántas filas debe devolver. |
+
+Los ejercicios de la Parte A practican: joins de varias tablas, self-join con `LEFT JOIN` (quién refirió a quién), anti-join (productos nunca vendidos), contar ceros con `count(columna)`, `GROUP BY` con `HAVING`, subconsulta correlacionada, `EXISTS`, la trampa de `NOT IN` con `NULL` (y su corrección con `NOT EXISTS`), el máximo con empates y la división con `NOT EXISTS` doble.
+
+**Cómo ejecutarlo:**
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
+```
+Los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql`.
 
 ## 9. Evidencias
 

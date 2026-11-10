@@ -6,7 +6,7 @@ Lista de trabajo que **todavía no se ha hecho**. Lo ya entregado (S14 y los 4 r
 
 | Cuándo | Qué falta |
 |---|---|
-| **S16** | El taller de ejercicios de consultas sobre el esquema nuevo que entregue el profesor (los 4 reportes del Hito 2 ya están en `postgres/scripts/reportes.sql`). |
+| **S16** | Terminar el taller de consultas sobre el esquema `tienda`. La Parte A ya está en `postgres/scripts/parte-a.sql`; faltan las partes siguientes, si la guía las pide. Los 4 reportes del Hito 2 ya están en `postgres/scripts/reportes.sql`. |
 | **Hito 3** | Análisis de normalización del esquema (mínimo 3FN), con sus dependencias funcionales. |
 | **Hito 4** | Procedimiento almacenado y trigger, a partir de las reglas que el esquema no garantiza (README, sección 4): máximo 3 préstamos activos, no prestar a un lector en mora, coherencia de perfiles, etc. |
 | **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js (incluido el reporte 4 como lista con el botón "Enviar notificación") y login con contraseñas bcrypt. |
