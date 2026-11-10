@@ -4,8 +4,8 @@
 
 | | |
 |---|---|
-| **Grupo** | ✏️ *(grupo 9)* |
-| **Integrantes** | ✏️ *Eisin Yeiner TObar Bravo* · *jeovany * · 
+| **Grupo** | ✏️ *(nombre o número del grupo)* |
+| **Integrantes** | ✏️ *Nombre 1* · *Nombre 2* · *Nombre 3* · *Nombre 4* |
 | **Entrega actual** | Hito 2, avance de S14: esquema en PostgreSQL y carga masiva desde CSV |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
