@@ -25,7 +25,6 @@ El código, la documentación y las evidencias del taller S16 están completos (
 
 | Cuándo | Qué falta |
 |---|---|
-| **S18** | Completar la Parte A1 (las 6 relaciones de la guía) en `docs/S18-taller-normalizacion.md`. A2, B y C están hechas. |
 | **Hito 3** (M5, S17 a S20) | Análisis de normalización del esquema `biblioteca` (mínimo 3FN), con sus dependencias funcionales. Se aplica el mismo método del taller S18. |
 | **Hito 4** | Procedimiento almacenado y trigger, a partir de las reglas que el esquema no garantiza (README, sección 4): máximo 3 préstamos activos, no prestar a un lector en mora, coherencia de perfiles, etc. |
 | **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js y login con contraseñas bcrypt. La API puede leer los reportes de las 4 vistas que ya crea `reportes.sql` (por ejemplo, `biblioteca.reporte_prestamos_mora` para la lista con el botón "Enviar notificación"). |

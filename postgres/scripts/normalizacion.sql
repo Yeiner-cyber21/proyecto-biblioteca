@@ -8,8 +8,10 @@
 --   docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
 --   docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
 --
--- Re-ejecutable: borra y vuelve a crear sus propias tablas y la vista. Las
--- pruebas de anomalías de la parte (e) terminan en ROLLBACK: no dejan datos.
+-- Re-ejecutable: borra y vuelve a crear sus propias tablas y la vista.
+-- La guía pide hacer (e) después de (d), porque (e) modifica los datos.
+-- Aquí cada prueba de (e) corre dentro de BEGIN … ROLLBACK: muestra el efecto
+-- y lo deshace, así que el script deja las tablas completas y se puede repetir.
 --
 -- Esquema 3FN (el análisis paso a paso está en docs/S18-taller-normalizacion.md, A2):
 --   dueno          (cedula_dueno PK, nombre_dueno, telefono_dueno)
@@ -18,7 +20,7 @@
 --   orden          (num_orden PK, fecha_ingreso, kilometraje, placa → vehiculo)
 --   servicio       (cod_servicio PK, nombre_servicio, precio_lista)
 --   mecanico       (cod_mecanico PK, nombre_mecanico)
---   orden_servicio (num_orden → orden, cod_servicio → servicio,
+--   orden_servicio (num_orden → orden (ON DELETE CASCADE), cod_servicio → servicio,
 --                   precio_cobrado, cod_mecanico → mecanico)
 --                   PK (num_orden, cod_servicio)
 --
@@ -31,7 +33,7 @@
 SET search_path TO automotriz;
 
 -- Limpiar lo que dejó una corrida anterior de este script (no toca servicio_plano)
-DROP VIEW  IF EXISTS servicio_reconstruido;
+DROP VIEW  IF EXISTS reconstruida;
 DROP TABLE IF EXISTS orden_servicio, orden, vehiculo, modelo, dueno, servicio, mecanico CASCADE;
 
 
@@ -47,7 +49,7 @@ DROP TABLE IF EXISTS orden_servicio, orden, vehiculo, modelo, dueno, servicio, m
 \echo
 \echo '== (a) Datos que contradicen las dependencias (0 filas = no hay contradicción) =='
 
-\echo '-- num_orden -> fecha_ingreso, kilometraje, placa'
+\echo '-- D1: num_orden -> fecha_ingreso, kilometraje, placa'
 SELECT   num_orden
 FROM     servicio_plano
 GROUP BY num_orden
@@ -55,20 +57,20 @@ HAVING   count(DISTINCT fecha_ingreso) > 1
       OR count(DISTINCT kilometraje)   > 1
       OR count(DISTINCT placa)         > 1;
 
-\echo '-- placa -> modelo, cedula_dueno'
+\echo '-- D2: placa -> modelo, cedula_dueno'
 SELECT   placa
 FROM     servicio_plano
 GROUP BY placa
 HAVING   count(DISTINCT modelo)       > 1
       OR count(DISTINCT cedula_dueno) > 1;
 
-\echo '-- modelo -> marca'
+\echo '-- D3: modelo -> marca'
 SELECT   modelo
 FROM     servicio_plano
 GROUP BY modelo
 HAVING   count(DISTINCT marca) > 1;
 
-\echo '-- cedula_dueno -> nombre_dueno, telefono_dueno'
+\echo '-- D4: cedula_dueno -> nombre_dueno, telefono_dueno'
 SELECT   cedula_dueno,
          count(DISTINCT nombre_dueno)                                AS nombres,
          count(DISTINCT telefono_dueno)                              AS telefonos,
@@ -78,18 +80,22 @@ GROUP BY cedula_dueno
 HAVING   count(DISTINCT nombre_dueno)   > 1
       OR count(DISTINCT telefono_dueno) > 1;
 
-\echo '-- cod_servicio -> nombre_servicio, precio_lista'
+\echo '-- D5: cod_servicio -> nombre_servicio, precio_lista'
 SELECT   cod_servicio
 FROM     servicio_plano
 GROUP BY cod_servicio
 HAVING   count(DISTINCT nombre_servicio) > 1
       OR count(DISTINCT precio_lista)    > 1;
 
-\echo '-- cod_mecanico -> nombre_mecanico'
+\echo '-- D6: cod_mecanico -> nombre_mecanico'
 SELECT   cod_mecanico
 FROM     servicio_plano
 GROUP BY cod_mecanico
 HAVING   count(DISTINCT nombre_mecanico) > 1;
+
+-- D7 (num_orden, cod_servicio -> precio_cobrado, cod_mecanico) no necesita
+-- consulta: (num_orden, cod_servicio) es la PRIMARY KEY de servicio_plano,
+-- así que no puede haber dos filas con la misma pareja.
 
 -- Resultado: solo falla cedula_dueno -> telefono_dueno.
 -- Jorge Mejía (cédula 16700002) aparece con dos teléfonos:
@@ -177,8 +183,10 @@ CREATE TABLE mecanico (
 );
 
 -- num_orden, cod_servicio -> precio_cobrado, cod_mecanico
+-- ON DELETE CASCADE: las líneas son parte de la orden; si se borra la orden,
+-- se borran sus líneas (y nada más: vehículo, dueño, servicio y mecánico quedan).
 CREATE TABLE orden_servicio (
-    num_orden       integer  NOT NULL REFERENCES orden (num_orden),
+    num_orden       integer  NOT NULL REFERENCES orden (num_orden) ON DELETE CASCADE,
     cod_servicio    char(3)  NOT NULL REFERENCES servicio (cod_servicio),
     precio_cobrado  integer  NOT NULL CHECK (precio_cobrado > 0),
     cod_mecanico    char(3)  NOT NULL REFERENCES mecanico (cod_mecanico),
@@ -239,7 +247,7 @@ UNION ALL SELECT 'orden_servicio', count(*) FROM orden_servicio;
 \echo
 \echo '== (d) Reconstrucción de la planilla =='
 
-CREATE VIEW servicio_reconstruido AS
+CREATE VIEW reconstruida AS
 SELECT o.num_orden,
        o.fecha_ingreso,
        o.kilometraje,
@@ -265,17 +273,17 @@ JOIN   mecanico me ON me.cod_mecanico = os.cod_mecanico;
 
 \echo '-- Filas: planilla y reconstrucción (esperado: 11 y 11)'
 SELECT (SELECT count(*) FROM servicio_plano)        AS planilla,
-       (SELECT count(*) FROM servicio_reconstruido) AS reconstruida;
+       (SELECT count(*) FROM reconstruida) AS reconstruida;
 
 \echo '-- Sobra en la reconstrucción: filas que no estaban en la planilla (esperado: 0 filas)'
-SELECT * FROM servicio_reconstruido
+SELECT * FROM reconstruida
 EXCEPT
 SELECT * FROM servicio_plano;
 
 \echo '-- Falta en la reconstrucción: filas de la planilla que se perdieron (esperado: 0 filas)'
 SELECT * FROM servicio_plano
 EXCEPT
-SELECT * FROM servicio_reconstruido;
+SELECT * FROM reconstruida;
 
 -- EXCEPT compara conjuntos (quita repetidos). Por eso también se cuentan
 -- las filas: 11 = 11 y los dos EXCEPT vacíos, y como servicio_plano no
@@ -285,8 +293,10 @@ SELECT * FROM servicio_reconstruido;
 
 -- =====================================================================
 -- (e) Las tres anomalías de S17 ya no ocurren
--- Cada prueba corre dentro de BEGIN … ROLLBACK: muestra el efecto y lo
--- deshace, así que el script deja las tablas como las cargó.
+-- Una sentencia por anomalía, como pide la guía: cambiar un teléfono,
+-- registrar un mecánico sin servicios y borrar órdenes sin perder el
+-- vehículo ni el servicio del catálogo. Cada una corre dentro de
+-- BEGIN … ROLLBACK: muestra el efecto y lo deshace.
 -- =====================================================================
 \echo
 \echo '== (e) Las tres anomalías de S17, en el esquema 3FN =='
@@ -304,63 +314,56 @@ UPDATE dueno SET telefono_dueno = '3209998877' WHERE cedula_dueno = '16700002';
 
 \echo '-- Todas las líneas de Jorge ven el teléfono nuevo (esperado: 5 filas, todas con 3209998877)'
 SELECT num_orden, cod_servicio, nombre_dueno, telefono_dueno
-FROM   servicio_reconstruido
+FROM   reconstruida
 WHERE  cedula_dueno = '16700002'
 ORDER BY num_orden, cod_servicio;
 ROLLBACK;
 
 -- ---------------------------------------------------------------------
--- Inserción. Un servicio nuevo que nadie ha pedido, un mecánico recién
--- contratado y un cliente que todavía no trae su carro.
--- En la planilla, ninguno se podía guardar sin inventar una orden:
--- (num_orden, cod_servicio) es la clave y no admite NULL.
+-- Inserción. Se registra un mecánico recién contratado, que todavía no ha
+-- hecho ningún servicio.
+-- En la planilla no se podía: la clave es (num_orden, cod_servicio) y no
+-- admite NULL, así que un mecánico solo existía "dentro" de un servicio.
 -- ---------------------------------------------------------------------
 \echo
-\echo '-- Inserción: servicio, mecánico y dueño sin ninguna orden (esperado: 3 INSERT 0 1)'
+\echo '-- Inserción: un mecánico nuevo, sin servicios (esperado: INSERT 0 1)'
 BEGIN;
-INSERT INTO servicio (cod_servicio, nombre_servicio, precio_lista)
-VALUES ('SUS', 'Revisión de suspensión', 90000);
-INSERT INTO mecanico (cod_mecanico, nombre_mecanico)
-VALUES ('M04', 'Luis Carvajal');
-INSERT INTO dueno (cedula_dueno, nombre_dueno, telefono_dueno)
-VALUES ('1150000004', 'Paola Andrade', '3165551122');
+INSERT INTO mecanico (cod_mecanico, nombre_mecanico) VALUES ('M04', 'Luis Carvajal');
 
-\echo '-- Quedaron guardados, con 0 órdenes (esperado: 3 filas)'
-SELECT 'servicio' AS que, cod_servicio AS codigo, nombre_servicio AS nombre,
-       (SELECT count(*) FROM orden_servicio os WHERE os.cod_servicio = s.cod_servicio) AS lineas_de_orden
-FROM   servicio s WHERE cod_servicio = 'SUS'
-UNION ALL
-SELECT 'mecanico', cod_mecanico, nombre_mecanico,
-       (SELECT count(*) FROM orden_servicio os WHERE os.cod_mecanico = m.cod_mecanico)
-FROM   mecanico m WHERE cod_mecanico = 'M04'
-UNION ALL
-SELECT 'dueno', cedula_dueno, nombre_dueno,
-       (SELECT count(*) FROM vehiculo v WHERE v.cedula_dueno = d.cedula_dueno)
-FROM   dueno d WHERE cedula_dueno = '1150000004';
+\echo '-- Quedó registrado, con 0 servicios (esperado: 1 fila)'
+SELECT m.cod_mecanico, m.nombre_mecanico,
+       (SELECT count(*) FROM orden_servicio os WHERE os.cod_mecanico = m.cod_mecanico) AS servicios
+FROM   mecanico m
+WHERE  m.cod_mecanico = 'M04';
 ROLLBACK;
 
 -- ---------------------------------------------------------------------
--- Borrado. Se borra la orden 5005, la única de Camilo Ibarra y de su
--- Duster, y la línea de cambio de batería de la orden 5003, la única vez
--- que se ha hecho ese servicio.
--- En la planilla, al borrar esas filas desaparecían también Camilo (con su
--- teléfono), el vehículo JKL012 y el servicio BAT con su precio de lista.
--- Aquí solo se borran la orden y sus líneas: lo demás sigue en su tabla.
+-- Borrado. Se borran las órdenes 5003 y 5005 con UNA sentencia (sus
+-- líneas se van con ellas por el ON DELETE CASCADE).
+-- En la planilla, borrar esas filas hacía desaparecer información que nadie
+-- quería borrar: la 5005 es la única orden del Duster JKL012 y de su dueño,
+-- Camilo Ibarra, y la 5003 es la única vez que se hizo el cambio de batería
+-- (BAT), así que se perdían el vehículo, el dueño y el servicio del catálogo.
+-- Aquí solo se borran las órdenes y sus líneas.
 -- ---------------------------------------------------------------------
 \echo
-\echo '-- Borrado: la orden 5005 y la línea BAT de la 5003 (esperado: DELETE 3, DELETE 1 y DELETE 1)'
+\echo '-- Borrado: las órdenes 5003 y 5005 (esperado: DELETE 2; sus 5 líneas se borran en cascada)'
 BEGIN;
-DELETE FROM orden_servicio WHERE num_orden = 5005;
-DELETE FROM orden          WHERE num_orden = 5005;
-DELETE FROM orden_servicio WHERE num_orden = 5003 AND cod_servicio = 'BAT';
+DELETE FROM orden WHERE num_orden IN (5003, 5005);
 
-\echo '-- Siguen existiendo el dueño, el vehículo y el servicio (esperado: 3 filas)'
-SELECT 'dueno' AS que, cedula_dueno AS codigo, nombre_dueno || ', tel. ' || telefono_dueno AS dato
+\echo '-- Quedan 4 órdenes y 6 líneas (esperado: 4 y 6)'
+SELECT (SELECT count(*) FROM orden)          AS ordenes,
+       (SELECT count(*) FROM orden_servicio) AS lineas_de_orden;
+
+\echo '-- Siguen existiendo el vehículo, el dueño y el servicio del catálogo (esperado: 3 filas)'
+SELECT 'vehiculo' AS que, placa AS codigo, modelo AS dato
+FROM   vehiculo WHERE placa = 'JKL012'
+UNION ALL
+SELECT 'dueno', cedula_dueno, nombre_dueno || ', tel. ' || telefono_dueno
 FROM   dueno WHERE cedula_dueno = '1144000003'
 UNION ALL
-SELECT 'vehiculo', placa, modelo FROM vehiculo WHERE placa = 'JKL012'
-UNION ALL
-SELECT 'servicio', cod_servicio, nombre_servicio || ', $' || precio_lista FROM servicio WHERE cod_servicio = 'BAT';
+SELECT 'servicio', cod_servicio, nombre_servicio || ', $' || precio_lista
+FROM   servicio WHERE cod_servicio = 'BAT';
 ROLLBACK;
 
 \echo

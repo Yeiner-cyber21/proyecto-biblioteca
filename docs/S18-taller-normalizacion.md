@@ -17,7 +17,7 @@ Las formas normales son versiones de esa regla, de la más permisiva a la más e
 
 | Forma normal | Qué exige | Qué prohíbe |
 |---|---|---|
-| 1FN | Cada celda tiene un solo valor atómico | Listas o grupos de valores dentro de una celda |
+| 1FN | Valores atómicos | Listas en una celda y grupos de columnas que repiten lo mismo (`telefono1`, `telefono2`…) |
 | 2FN | 1FN, y ningún atributo no primo depende de **una parte** de una clave candidata | Dependencias parciales |
 | 3FN | 2FN, y para cada X → A no trivial: X es superclave **o** A es primo (parte de alguna clave candidata) | Dependencias transitivas (un atributo no clave que determina a otro) |
 | FNBC | Para cada X → A no trivial: X es superclave, sin excepciones | Cualquier determinante que no sea superclave |
@@ -28,39 +28,43 @@ Las formas normales son versiones de esa regla, de la más permisiva a la más e
 
 ## Parte A1. Diagnóstico
 
-> **Pendiente:** la tabla con las 6 relaciones está en la guía del S18 y se completa con ella. Para cada relación se responde con el mismo método:
->
-> 1. **Claves candidatas:** se calcula el cierre X⁺ de los atributos que no aparecen al lado derecho de ninguna dependencia (S17, sección 9). Si su cierre da todos los atributos, son la única clave candidata.
-> 2. **Forma normal más alta:** se revisa en orden 1FN → 2FN → 3FN → FNBC con la tabla de arriba.
-> 3. **Lo que le impide subir:** la dependencia (o el atributo) que rompe la forma siguiente.
+Método para cada relación: (1) las **claves candidatas**, con el cierre X⁺ de los atributos que no aparecen al lado derecho de ninguna dependencia (S17, sección 9); (2) la **forma normal más alta**, revisando en orden 1FN → 2FN → 3FN → FNBC; (3) **lo que le impide subir** a la siguiente.
 
-### Relación 1: ¿qué pasa si `telefonos` se cambia por `telefono1`, `telefono2` y `telefono3`?
+| # | Relación | Claves candidatas | Forma normal más alta | Qué le impide subir |
+|---|---|---|---|---|
+| 1 | `Pasajero(cedula, nombre, telefonos)` | {cedula} | **Ninguna: no está en 1FN** | El atributo `telefonos` no es atómico: guarda una lista (`'3001112233, 3154445566'`) |
+| 2 | `Inscripcion(cod_est, cod_taller, fecha_inscripcion, nombre_taller)` | {cod_est, cod_taller} | **1FN** | `cod_taller → nombre_taller`: el no primo `nombre_taller` depende de una **parte** de la clave (dependencia parcial) |
+| 3 | `Empleado(cedula, nombre, cod_depto, nombre_depto)` | {cedula} | **2FN** | `cod_depto → nombre_depto`: `cod_depto` no es superclave y `nombre_depto` no es primo (dependencia transitiva: cedula → cod_depto → nombre_depto) |
+| 4 | `Vuelo(num_vuelo, fecha, matricula_avion, cedula_piloto)` | {num_vuelo, fecha} | **FNBC** | Nada: la única dependencia tiene como determinante la clave |
+| 5 | `Municipio(cod_dane, nombre, departamento)` | {cod_dane} y {nombre, departamento} | **FNBC** | Nada: los **dos** determinantes son claves candidatas |
+| 6 | `Clase(cod_est, materia, profesor)` | {cod_est, materia} y {cod_est, profesor} | **3FN** | `profesor → materia`: `profesor` no es superclave. Se acepta en 3FN solo porque `materia` es primo |
 
-Un atributo `telefonos` que guarda varios números en la misma celda **no está en 1FN**: el valor no es atómico.
+**Justificación, relación por relación:**
 
-Partirlo en `telefono1`, `telefono2` y `telefono3` deja un valor por celda, así que en sentido estricto ya **no rompe la atomicidad**. Pero es un **grupo repetido**: la misma información (un teléfono) en varias columnas. Por eso, en la práctica (y en muchos textos), se considera que **sigue sin estar bien en 1FN**, y trae sus propios problemas:
-
-- **Límite artificial:** quien tenga 4 teléfonos no cabe. Agregar un cuarto obliga a cambiar el esquema (`ALTER TABLE`).
-- **`NULL` de relleno:** quien tiene un solo teléfono deja dos columnas vacías.
-- **Consultas torpes:** buscar a quien tiene el número X exige `WHERE telefono1 = X OR telefono2 = X OR telefono3 = X`.
-- **Reglas que no se pueden declarar:** un `UNIQUE` no impide que el mismo número esté en `telefono1` de una fila y en `telefono2` de otra, ni dos veces en la misma fila.
-- **Orden sin significado:** ¿cuál es el teléfono "1"? La columna inventa un orden que el negocio no tiene.
-
-**Solución:** sacar los teléfonos a su propia tabla, una fila por teléfono: `telefono(clave_de_la_relacion_1, telefono)`, con PK compuesta por las dos columnas y FK a la relación 1. Es la misma idea de S17: un dato que se repite va a su propia tabla, donde es clave.
-
----
+1. **Pasajero.** {cedula}⁺ = {cedula, nombre, telefonos}: es la clave. Pero `telefonos` guarda varios valores en una celda, y la 1FN exige valores atómicos. Sin 1FN no se evalúan las demás.
+   - **¿Y con `telefono1`, `telefono2`, `telefono3`?** **Sigue sin estar en 1FN.** Cada celda tendría un solo número, pero la definición del curso también prohíbe los **grupos de columnas que repiten lo mismo** (pre-lectura, sección 2). Además, limita a tres teléfonos, deja `NULL` en quien tiene menos, obliga a buscar en tres columnas (`WHERE telefono1 = x OR telefono2 = x OR telefono3 = x`) e impide declarar con `UNIQUE` que un número no se repita. **Cómo se arregla:** `Pasajero(cedula PK, nombre)` y `Telefono_pasajero(cedula → Pasajero, telefono)`, con PK (cedula, telefono), una fila por teléfono. Las dos quedan en FNBC.
+2. **Inscripcion.** `cod_est` y `cod_taller` no aparecen a la derecha de ninguna dependencia, y juntos determinan todo: {cod_est, cod_taller} es la única clave. Está en 1FN (valores atómicos), pero `nombre_taller` depende solo de `cod_taller`, una parte de la clave: no está en 2FN. Se arregla con `Taller(cod_taller PK, nombre_taller)` e `Inscripcion(cod_est, cod_taller → Taller, fecha_inscripcion)`.
+3. **Empleado.** {cedula}⁺ = {cedula, nombre, cod_depto, nombre_depto}: clave simple, así que está en 2FN (no hay "partes" de la clave). Pero `cod_depto → nombre_depto` es transitiva: el nombre del departamento se repite en cada empleado. Se arregla con `Departamento(cod_depto PK, nombre_depto)` y `Empleado(cedula PK, nombre, cod_depto → Departamento)`.
+4. **Vuelo.** {num_vuelo, fecha}⁺ = todos los atributos: es la única clave (el mismo número de vuelo se repite cada día). La única dependencia no trivial tiene como determinante la clave: cumple la regla de S17, está en **FNBC** y no hay nada que mejorar.
+5. **Municipio.** {cod_dane}⁺ = todos los atributos, y también {nombre, departamento}⁺ = {nombre, departamento, cod_dane} = todos. Hay **dos claves candidatas**. La dependencia `nombre, departamento → cod_dane` *parece* un determinante que no es clave, pero sí lo es: es la otra clave candidata. Los dos determinantes son superclaves: **FNBC**. (Los tres atributos son primos.)
+6. **Clase.** {cod_est, materia}⁺ = todos, por la primera dependencia. {cod_est, profesor}⁺ = {cod_est, profesor, materia} = todos, por `profesor → materia`. Hay **dos claves candidatas que se solapan** (comparten `cod_est`), y los tres atributos son primos. **3FN: sí**, porque en `profesor → materia` el lado derecho es primo. **FNBC: no**, porque `profesor` no es superclave. Es el mismo caso de `monitoria` de la pre-lectura, y el mismo de la Parte C.
 
 ## Parte A2. El Pistón hasta 3FN
 
 ### (a) Por qué la hoja original no está en 1FN, y la orden 5005 en 1FN
 
-En la hoja de cálculo original, **cada orden ocupa una sola fila**, y los servicios de la orden (con su precio y su mecánico) se escriben **juntos en la misma celda**. La orden 5005 se ve así:
+Así se ve la orden 5005 en la hoja de cálculo del taller:
 
-| num_orden | fecha | km | placa | vehículo | dueño | servicios |
-|---|---|---|---|---|---|---|
-| 5005 | 2026-10-14 | 52000 | JKL012 | Renault Duster | Camilo Ibarra, 1144000003, 3157778899 | ACE Cambio de aceite $120 000 (Rosa Quintero); FRE Cambio de pastillas de freno $150 000 (Hernán Bedoya); ALI Alineación y balanceo $80 000 (Hernán Bedoya) |
+| orden | fecha | km | placa | carro | dueño | teléfono | servicios | cobrado | mecánicos |
+|---|---|---|---|---|---|---|---|---|---|
+| 5005 | 2026-10-14 | 52000 | JKL012 | Renault Duster | 1144000003 Camilo Ibarra | 3157778899 | ACE Cambio de aceite, FRE Pastillas de freno, ALI Alineación | 120000, 150000, 80000 | M01 Rosa Quintero, M02 Hernán Bedoya, M02 Hernán Bedoya |
 
-Eso **no está en 1FN**, porque la celda `servicios` guarda **tres valores** (en realidad, tres grupos de valores). No se puede consultar "¿cuántas alineaciones se hicieron?" ni sumar lo cobrado sin partir el texto, y nada impide escribir mal un código o un precio.
+**No está en 1FN** porque varias celdas no son atómicas:
+
+- `servicios`, `cobrado` y `mecánicos` guardan **listas**: tres servicios, tres precios y tres mecánicos en una sola celda. Además, la lista de precios y la de mecánicos solo se entienden **por posición** (el segundo precio es del segundo servicio): si alguien borra un servicio y no el precio, las listas se desalinean sin que nada lo avise.
+- Cada servicio de la lista junta dos datos (`ACE Cambio de aceite` es código y nombre), igual que `dueño` (cédula y nombre) y `carro` (marca y modelo).
+
+Con eso no se puede responder "¿cuántas alineaciones hizo Hernán?" ni sumar lo cobrado sin partir texto, ni poner una FK hacia un catálogo de servicios.
 
 **En 1FN**, cada servicio hecho en la orden es una fila, y los datos de la orden, el vehículo y el dueño se copian en cada una. Es la forma de `servicio_plano`. Las tres filas de la orden 5005:
 
@@ -74,17 +78,17 @@ Ya está en 1FN, pero se nota la redundancia: la fecha, el kilometraje, el vehí
 
 ### (b) Dependencias funcionales de `servicio_plano`
 
-Salen de las reglas del negocio del taller, no de los datos (S17, sección 5.2). Los datos solo sirven para refutar: en la Parte B (a) se comprobó con SQL que ninguna dependencia queda contradicha, salvo el teléfono de Jorge Mejía, que era un error y se corrigió.
+Salen de las 5 reglas del negocio que dio el dueño del taller, no de los datos (S17, sección 5.2). Los datos solo sirven para refutar: en la Parte B (a) se comprobó con SQL que ninguna dependencia queda contradicha, salvo el teléfono de Jorge Mejía, que era un error y se corrigió.
 
 | # | Dependencia | Regla del negocio que la justifica |
 |---|---|---|
-| D1 | `num_orden → fecha_ingreso, kilometraje, placa` | Una orden se abre una vez, en una fecha, para un vehículo, y en ella se anota el kilometraje con que llegó |
-| D2 | `placa → modelo, cedula_dueno` | La placa identifica un vehículo; un vehículo es de un modelo y tiene un dueño (el **actual**) |
-| D3 | `modelo → marca` | Cada modelo es de una sola marca (Spark y Sail son Chevrolet; Logan y Duster, Renault) |
-| D4 | `cedula_dueno → nombre_dueno, telefono_dueno` | La cédula identifica a una persona, que tiene un nombre y un teléfono registrados |
-| D5 | `cod_servicio → nombre_servicio, precio_lista` | El catálogo del taller: cada código es un servicio con su precio de lista |
-| D6 | `cod_mecanico → nombre_mecanico` | El código identifica a un mecánico |
-| D7 | `num_orden, cod_servicio → precio_cobrado, cod_mecanico` | Cada servicio hecho en una orden se cobra a un precio (que puede tener descuento) y lo hace un mecánico |
+| D1 | `num_orden → fecha_ingreso, kilometraje, placa` | **Regla 3:** cada orden tiene un número, la fecha de ingreso, el vehículo y el kilometraje con el que llegó |
+| D2 | `placa → modelo, cedula_dueno` | **Regla 1:** cada vehículo se identifica por su placa y tiene un modelo; el taller guarda el dueño **actual**: un vehículo tiene un dueño registrado |
+| D3 | `modelo → marca` | **Regla 1:** cada modelo es de una sola marca (Spark y Sail son Chevrolet; Logan y Duster, Renault) |
+| D4 | `cedula_dueno → nombre_dueno, telefono_dueno` | **Regla 2:** de cada dueño se guardan cédula, nombre y **un** teléfono |
+| D5 | `cod_servicio → nombre_servicio, precio_lista` | **Regla 4:** catálogo de servicios, cada uno con un código de tres letras, un nombre y un precio de lista |
+| D6 | `cod_mecanico → nombre_mecanico` | **Regla 5:** de cada mecánico se guardan un código y su nombre |
+| D7 | `num_orden, cod_servicio → precio_cobrado, cod_mecanico` | **Reglas 4 y 5:** cada servicio se hace a lo sumo una vez por orden, con un precio cobrado que puede ser distinto al de lista, y lo hace **un solo** mecánico |
 
 Por transitividad se deducen otras, por ejemplo `placa → marca, nombre_dueno, telefono_dueno` (D2 y luego D3 y D4) o `num_orden → modelo, marca, cedula_dueno, …` (D1 y luego D2). No se escriben aparte, porque salen de las siete.
 
@@ -92,7 +96,7 @@ Por transitividad se deducen otras, por ejemplo `placa → marca, nombre_dueno, 
 
 | No es dependencia | Por qué | Consecuencia |
 |---|---|---|
-| `placa → kilometraje` | ABC123 llegó con 45 200 km en la orden 5001 y con 46 900 en la 5004 | El kilometraje es de la **orden** |
+| `placa → kilometraje` | Regla 3: un vehículo vuelve muchas veces; ABC123 llegó con 45 200 km en la orden 5001 y con 46 900 en la 5004 | El kilometraje es de la **orden** |
 | `cod_servicio → precio_cobrado` | El cambio de aceite se cobró a 120 000 y a 110 000 (orden 5002) | El precio cobrado es de la **línea** de la orden; el de lista, del servicio |
 | `num_orden → cod_mecanico` | En la orden 5001 trabajaron M01 y M02 | El mecánico es de **cada servicio** de la orden |
 | `cod_mecanico → cod_servicio` | Hernán Bedoya hizo alineaciones y frenos | Un mecánico no está atado a un servicio |
@@ -197,7 +201,7 @@ Cada dependencia de (b) quedó **entera dentro de una tabla**, con su determinan
 
 No queda ninguna otra dependencia. Por ejemplo, en `orden_servicio` no se cumple `cod_mecanico → cod_servicio` (Hernán hizo alineaciones y frenos), y en `orden` no se cumple `placa → kilometraje`.
 
-Hay además un argumento general. La 3FN y la FNBC solo se diferencian cuando una tabla tiene **varias claves candidatas que se traslapan** (es el caso de la Parte C). Aquí cada tabla tiene **una sola** clave candidata, así que estar en 3FN ya implica estar en FNBC.
+Hay además un argumento general. La 3FN y la FNBC solo se diferencian cuando una tabla tiene **dos claves candidatas compuestas que se solapan** (es el caso de la Parte C). Aquí cada tabla tiene **una sola** clave candidata, así que estar en 3FN ya implica estar en FNBC.
 
 ### (g) Si el taller necesita al dueño **del día de la orden**
 
@@ -221,28 +225,121 @@ orden    (num_orden PK, fecha_ingreso, kilometraje,
 
 ## Parte B. La descomposición en PostgreSQL
 
-Archivo: [`postgres/scripts/normalizacion.sql`](../postgres/scripts/normalizacion.sql). Se corre después de `S18-automotriz.sql`:
+Archivo: [`postgres/scripts/normalizacion.sql`](../postgres/scripts/normalizacion.sql), con un comentario en cada paso. Se corre después de `S18-automotriz.sql`:
 
 ```powershell
 docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
 docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
 ```
 
-| Punto | Qué hace el script | Resultado |
+| Paso | Qué hace el script | Resultado |
 |---|---|---|
-| (a) | Una consulta `GROUP BY x HAVING count(DISTINCT y) > 1` por cada dependencia (S17, sección 5.3) | Solo falla `cedula_dueno → telefono_dueno`: Jorge Mejía (16700002) tiene `3104445566` en 4 filas (órdenes 5002 y 5003) y `3104445567` en 1 (orden 5006). Se deja **3104445566**: aparece en 4 de 5 filas y en dos órdenes, y el otro solo cambia el último dígito, lo que apunta a un error de digitación. El `UPDATE` corrige **todas** las filas de esa cédula. Sin esta corrección, la carga de `dueno` falla con `duplicate key … (cedula_dueno)=(16700002)` (comprobado). |
-| (b) | Las 7 tablas, con `PRIMARY KEY`, `REFERENCES` y `NOT NULL` (y algunos `CHECK` de precios y kilometraje) | 7 `CREATE TABLE` |
-| (c) | `INSERT INTO … SELECT DISTINCT … FROM servicio_plano`, primero las tablas a las que nadie apunta | dueno 3, modelo 4, vehiculo 4, orden 6, servicio 5, mecanico 3, orden_servicio 11 |
-| (d) | La vista `servicio_reconstruido` (join de las 7 tablas) y `EXCEPT` en los dos sentidos | 11 = 11 filas; **0 filas** sobran y **0** faltan |
-| (e) | Las tres anomalías, cada una en `BEGIN … ROLLBACK` | **Modificación:** el teléfono de Jorge cambia con `UPDATE 1` y sus 5 líneas lo ven. **Inserción:** un servicio, un mecánico y un dueño sin órdenes se guardan. **Borrado:** al borrar la orden 5005 y la línea BAT de la 5003, siguen existiendo Camilo Ibarra, el vehículo JKL012 y el servicio BAT. |
+| (a) | Por cada dependencia de A2 (b), la consulta de S17 (sección 5.3): `GROUP BY x HAVING count(DISTINCT y) > 1`. D7 no necesita consulta: su determinante es la PK de `servicio_plano`. | Solo falla **D4** (`cedula_dueno → telefono_dueno`): Jorge Mejía (16700002) tiene `3104445566` en 4 filas (órdenes 5002 y 5003) y `3104445567` en 1 (orden 5006). Se deja **3104445566**: aparece en 4 de 5 filas y en dos órdenes, coincide con el de la hoja original de la guía (orden 5002), y el otro solo cambia el último dígito, lo que apunta a un error de digitación. El `UPDATE` corrige **todas** las filas de esa cédula. Sin esta corrección, la carga de `dueno` falla con `duplicate key … (cedula_dueno)=(16700002)` (comprobado). |
+| (b) | Las 7 tablas de A2 (e), con `PRIMARY KEY`, `REFERENCES` y `NOT NULL` (y `CHECK` de precios y kilometraje), en el esquema `automotriz` | 7 `CREATE TABLE` |
+| (c) | `INSERT INTO … SELECT DISTINCT … FROM servicio_plano`, primero las tablas a las que nadie apunta, y el conteo de filas | dueno 3, modelo 4, vehiculo 4, orden 6, servicio 5, mecanico 3, orden_servicio 11 |
+| (d) | La vista `reconstruida` (join de las 7 tablas, columnas en el mismo orden) y `EXCEPT` en los dos sentidos | 11 = 11 filas; **0 filas** sobran y **0** faltan |
+| (e) | Una sentencia por anomalía, después de (d), cada una en `BEGIN … ROLLBACK` | **Modificación:** `UPDATE 1` cambia el teléfono de Jorge, y sus 5 líneas lo ven. **Inserción:** el mecánico M04 se registra sin servicios. **Borrado:** `DELETE FROM orden WHERE num_orden IN (5003, 5005)` borra 2 órdenes (y sus líneas, por `ON DELETE CASCADE`), y siguen existiendo el vehículo JKL012, su dueño y el servicio BAT del catálogo, que en la planilla se habrían perdido. |
 
 El script se puede correr varias veces seguidas: borra y vuelve a crear sus tablas, y las pruebas de (e) se deshacen solas.
 
----
+### Salida de `psql` de los pasos (a), (c) y (d)
+
+Salida de PostgreSQL 16 al correr `S18-automotriz.sql` y luego `normalizacion.sql`.
+
+**(a) Revisión de las dependencias y corrección:**
+
+```text
+== (a) Datos que contradicen las dependencias (0 filas = no hay contradicción) ==
+-- D1: num_orden -> fecha_ingreso, kilometraje, placa
+ num_orden
+-----------
+(0 rows)
+
+-- D2: placa -> modelo, cedula_dueno
+ placa
+-------
+(0 rows)
+
+-- D3: modelo -> marca
+ modelo
+--------
+(0 rows)
+
+-- D4: cedula_dueno -> nombre_dueno, telefono_dueno
+ cedula_dueno | nombres | telefonos |    valores_telefono
+--------------+---------+-----------+-------------------------
+ 16700002     |       1 |         2 | 3104445566 / 3104445567
+(1 row)
+
+-- D5: cod_servicio -> nombre_servicio, precio_lista
+ cod_servicio
+--------------
+(0 rows)
+
+-- D6: cod_mecanico -> nombre_mecanico
+ cod_mecanico
+--------------
+(0 rows)
+
+
+-- Corrección: el teléfono de Jorge Mejía (esperado: UPDATE 1; UPDATE 0 si el script ya se había corrido)
+UPDATE 1
+-- cedula_dueno -> telefono_dueno, después de corregir (esperado: 0 filas)
+ cedula_dueno
+--------------
+(0 rows)
+```
+
+**(c) Carga de las tablas:**
+
+```text
+== (c) Carga de las tablas ==
+INSERT 0 3
+INSERT 0 4
+INSERT 0 4
+INSERT 0 6
+INSERT 0 5
+INSERT 0 3
+INSERT 0 11
+
+-- Filas por tabla (esperado: 3, 4, 4, 6, 5, 3 y 11)
+     tabla      | filas
+----------------+-------
+ dueno          |     3
+ modelo         |     4
+ vehiculo       |     4
+ orden          |     6
+ servicio       |     5
+ mecanico       |     3
+ orden_servicio |    11
+(7 rows)
+```
+
+**(d) Reconstrucción y `EXCEPT` en los dos sentidos:**
+
+```text
+== (d) Reconstrucción de la planilla ==
+CREATE VIEW
+-- Filas: planilla y reconstrucción (esperado: 11 y 11)
+ planilla | reconstruida
+----------+--------------
+       11 |           11
+(1 row)
+
+-- Sobra en la reconstrucción: filas que no estaban en la planilla (esperado: 0 filas)
+ num_orden | fecha_ingreso | kilometraje | placa | modelo | marca | cedula_dueno | nombre_dueno | telefono_dueno | cod_servicio | nombre_servicio | precio_lista | precio_cobrado | cod_mecanico | nombre_mecanico
+-----------+---------------+-------------+-------+--------+-------+--------------+--------------+----------------+--------------+-----------------+--------------+----------------+--------------+-----------------
+(0 rows)
+
+-- Falta en la reconstrucción: filas de la planilla que se perdieron (esperado: 0 filas)
+ num_orden | fecha_ingreso | kilometraje | placa | modelo | marca | cedula_dueno | nombre_dueno | telefono_dueno | cod_servicio | nombre_servicio | precio_lista | precio_cobrado | cod_mecanico | nombre_mecanico
+-----------+---------------+-------------+-------+--------+-------+--------------+--------------+----------------+--------------+-----------------+--------------+----------------+--------------+-----------------
+(0 rows)
+```
 
 ## Parte C. 3FN frente a FNBC
 
-Relación nueva: `responsable(num_orden, area, cod_mecanico)`. Reglas:
+Relación nueva: `responsable(num_orden, area, cod_mecanico)`, donde `area` es motor, frenos o eléctrico. Reglas:
 
 - **R1.** En cada orden, un área tiene un solo responsable.
 - **R2.** Cada mecánico trabaja en una sola área.
@@ -260,7 +357,7 @@ Claves candidatas, con cierres:
 - {num_orden, cod_mecanico}⁺ = {num_orden, cod_mecanico, area} (por F2). También es clave, y también es mínima.
 - `num_orden` no aparece al lado derecho de ninguna dependencia, así que está en toda clave. Las únicas combinaciones mínimas con él son las dos anteriores.
 
-**Claves candidatas: {num_orden, area} y {num_orden, cod_mecanico}.** Son dos y **se traslapan** (comparten `num_orden`): esa es justo la situación en la que 3FN y FNBC dan respuestas distintas.
+**Claves candidatas: {num_orden, area} y {num_orden, cod_mecanico}.** Son dos y **se solapan** (comparten `num_orden`): esa es justo la situación en la que 3FN y FNBC dan respuestas distintas (pre-lectura, sección 5, el caso `monitoria`).
 
 ### (b) ¿3FN? ¿FNBC?
 
@@ -283,14 +380,14 @@ Las dos están en FNBC. En `mecanico_area`, la única dependencia es F2, con `co
 
 **F1 (R1) ya no se puede hacer cumplir con claves**, porque sus tres atributos quedaron en tablas distintas: `area` está en `mecanico_area` y `num_orden` está en `asignacion`. Ninguna PK ni `UNIQUE` de una sola tabla ve a la vez la orden y el área. A esto se le llama **no preservar las dependencias**.
 
-Ejemplo, probado en PostgreSQL, con un mecánico nuevo M04 que, como Hernán (M02), es de Frenos:
+Ejemplo, probado en PostgreSQL, con un mecánico nuevo M04 que, como Hernán (M02), es de frenos:
 
 ```
 mecanico_area                asignacion
 cod_mecanico | area          num_orden | cod_mecanico
 -------------+--------       ----------+-------------
-M02          | Frenos        5005      | M02
-M04          | Frenos        5005      | M04      ← se acepta: la PK (5005, M04) no se repite
+M02          | frenos        5005      | M02
+M04          | frenos        5005      | M04      ← se acepta: la PK (5005, M04) no se repite
 ```
 
 Las dos inserciones pasan, porque cada tabla cumple sus claves. Pero al juntarlas:
@@ -298,25 +395,26 @@ Las dos inserciones pasan, porque cada tabla cumple sus claves. Pero al juntarla
 ```
 num_orden | area   | responsables | mecanicos
 ----------+--------+--------------+-----------
-5005      | Frenos | 2            | M02, M04
+5005      | frenos | 2            | M02, M04
 ```
 
-La orden 5005 quedó con **dos responsables de Frenos**, y la base no lo impidió: se violó R1.
+La orden 5005 quedó con **dos responsables de frenos**, y la base no lo impidió: se violó R1.
 
 ### (e) Recomendación para el taller
 
 **Quedarse en 3FN con `responsable(num_orden, area, cod_mecanico)` y hacer cumplir R2 con una FK compuesta**, en lugar de pasar a FNBC:
 
+Sobre el esquema de la Parte B, eso es agregarle el área a `mecanico` y crear `responsable`:
+
 ```sql
-CREATE TABLE mecanico (
-    cod_mecanico  char(3)      PRIMARY KEY,
-    area          varchar(30)  NOT NULL,
-    UNIQUE (cod_mecanico, area)              -- destino de la FK compuesta
-);
+ALTER TABLE mecanico
+    ADD COLUMN area varchar(10) NOT NULL DEFAULT 'motor'
+        CHECK (area IN ('motor', 'frenos', 'eléctrico')),
+    ADD UNIQUE (cod_mecanico, area);          -- destino de la FK compuesta
 
 CREATE TABLE responsable (
     num_orden     integer      REFERENCES orden (num_orden),
-    area          varchar(30),
+    area          varchar(10),
     cod_mecanico  char(3)      NOT NULL,
     PRIMARY KEY (num_orden, area),                                   -- R1
     FOREIGN KEY (cod_mecanico, area)
@@ -324,8 +422,10 @@ CREATE TABLE responsable (
 );
 ```
 
-- **R1** queda garantizada por la PK `(num_orden, area)`: un segundo responsable de Frenos en la 5005 da `duplicate key`.
-- **R2** queda garantizada por la FK compuesta: poner a M02 como responsable de Electricidad da `violates foreign key constraint`, porque el par (M02, Electricidad) no existe en `mecanico`.
+(El `DEFAULT 'motor'` solo sirve para poder agregar la columna a los mecánicos que ya existen; después se le asigna a cada uno su área real.)
+
+- **R1** queda garantizada por la PK `(num_orden, area)`: un segundo responsable de frenos en la 5005 da `duplicate key`.
+- **R2** queda garantizada por la FK compuesta: poner a M02 como responsable de eléctrico da `violates foreign key constraint`, porque el par (M02, eléctrico) no existe en `mecanico`.
 - La redundancia que queda (el área repetida en `responsable`) **no puede contradecirse**: la FK obliga a que coincida con la de `mecanico`, y `ON UPDATE CASCADE` la mantiene al día si el mecánico cambia de área.
 
 Las dos restricciones se probaron en PostgreSQL. Así las dos reglas del negocio quedan declaradas en el esquema, sin código adicional.
@@ -338,7 +438,7 @@ Las dos restricciones se probaron en PostgreSQL. Así las dos reglas del negocio
 
 | Parte | Resultado |
 |---|---|
-| A1 | Pendiente de la tabla de la guía. Pregunta de `telefonos` respondida |
+| A1 | Las 6 relaciones: 1 no está en 1FN (y con `telefono1..3` tampoco), 2 en 1FN, 3 en 2FN, 4 y 5 en FNBC, 6 en 3FN |
 | A2 | 1FN → 2FN (dos dependencias parciales) → 3FN (cuatro transitivas): 7 tablas, todas en FNBC, sin pérdida y conservando las 7 dependencias |
-| B | `normalizacion.sql`: 1 contradicción corregida, 7 tablas cargadas, reconstrucción exacta (`EXCEPT` = 0 en los dos sentidos) y las 3 anomalías eliminadas |
+| B | `normalizacion.sql`: 1 contradicción corregida (D4), 7 tablas cargadas, la vista `reconstruida` exacta (`EXCEPT` = 0 en los dos sentidos) y las 3 anomalías eliminadas |
 | C | `responsable` está en 3FN pero no en FNBC; FNBC pierde R1; se recomienda 3FN con FK compuesta |
