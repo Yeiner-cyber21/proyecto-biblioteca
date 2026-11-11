@@ -221,15 +221,15 @@ Archivo: [`postgres/scripts/datos/libros_propios.csv`](postgres/scripts/datos/li
 
 | Línea | Fila | Resultado | Qué prueba |
 |---|---|---|---|
-| 2 | *La vorágine* | ✅ Cargada | Fila normal; primera aparición del ISBN que se repite en la línea 7 |
-| 3 | *María* | ✅ Cargada | Corrección: el ISBN `978-0-00-000004-0` se guarda como `9780000000040`, y `novela` como `Novela` |
-| 4 | *El coronel no tiene quien le escriba* | ✅ Cargada | Corrección: espacios sobrantes; el autor ya existía y no se duplica |
-| 5 | *Delirio* | ✅ Cargada | Fila normal |
-| 6 | *El olvido que seremos* | ✅ Cargada | Categoría nueva (`Biografía`), creada automáticamente |
-| 7 | ISBN de la línea 2, repetido | ❌ **Error nuevo** | `isbn repetido en el archivo (primera aparición: línea 2)` |
-| 8 | Año 2031 | ❌ **Error nuevo** | `año en el futuro (posterior a 2026)` |
-| 9 | 1000 ejemplares | ❌ **Error nuevo** | `ejemplares supera el máximo por carga (100)` |
-| 10 | Ejemplares `tres` | ❌ Extra | `ejemplares no numérico`: prueba la regla que no activaron los datos del curso |
+| 2 | *La vorágine* | Cargada | Fila normal; primera aparición del ISBN que se repite en la línea 7 |
+| 3 | *María* | Cargada | Corrección: el ISBN `978-0-00-000004-0` se guarda como `9780000000040`, y `novela` como `Novela` |
+| 4 | *El coronel no tiene quien le escriba* | Cargada | Corrección: espacios sobrantes; el autor ya existía y no se duplica |
+| 5 | *Delirio* | Cargada | Fila normal |
+| 6 | *El olvido que seremos* | Cargada | Categoría nueva (`Biografía`), creada automáticamente |
+| 7 | ISBN de la línea 2, repetido | Rechazada: **error nuevo** | `isbn repetido en el archivo (primera aparición: línea 2)` |
+| 8 | Año 2031 | Rechazada: **error nuevo** | `año en el futuro (posterior a 2026)` |
+| 9 | 1000 ejemplares | Rechazada: **error nuevo** | `ejemplares supera el máximo por carga (100)` |
+| 10 | Ejemplares `tres` | Rechazada: caso extra | `ejemplares no numérico`: prueba la regla que no activaron los datos del curso |
 
 Resultado: **5 cargadas, 4 rechazadas**. El catálogo queda en 37 libros, 104 ejemplares, 33 autores y 10 categorías.
 
@@ -352,24 +352,24 @@ Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió ant
 
 | # | Caso | Reporte | Dato de prueba | Esperado | Obtenido | ¿Coincidió? / qué se corrigió |
 |---|---|---|---|---|---|---|
-| 1 | Libro que nadie ha prestado | R1 | 16 libros sin préstamos, entre ellos *El olvido que seremos* | Cuenta 0, pero queda fuera del top: hay 21 libros con al menos un préstamo | Cuenta 0; fuera del top | ✅ Sí. La decisión quedó escrita en el encabezado del reporte 1. |
-| 2 | Dos libros empatados en el último puesto | R1 | 16 libros con 1 préstamo, en los puestos 6 a 21 | 21 filas: sale también el empatado del puesto 21 | 21 filas; 16 empatados con 1 | ✅ Sí |
-| 3 | Dos lectores empatados en el primer lugar | R2 | Mariana y Santiago, 5 préstamos devueltos cada uno | Salen los dos | Mariana y Santiago, 5 | ✅ Sí |
-| 4 | Lector con varios préstamos abiertos y ninguno devuelto | R2 | Juan David (2 abiertos, 0 devueltos) y Camila (6 préstamos, 3 devueltos) | No sale ninguno | No sale ninguno | ✅ Sí. La regla de máximo 3 préstamos abiertos impide que un lector sin devoluciones tenga más préstamos que los ganadores (5). Por eso Camila cubre la parte de "más préstamos que los ganadores". |
-| 5 | Préstamo devuelto después de la fecha esperada | R3, R4 | Santiago devolvió el Quijote 6 días tarde | No es mora: 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | ✅ Sí |
-| 6 | Préstamo abierto que vence hoy | R3, R4 | Isabella: la Rayuela, su único préstamo abierto | Regla `<`: no es mora; 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | ✅ Sí, **después de corregir los datos.** El préstamo era de Juan David, que ya sale en R3 por otros dos préstamos, así que en R3 el caso no se notaba. Se pasó a Isabella. Prueba de control: con `<=`, la verificación da `R3: 1 · R4: 1` y marca `NO`. |
-| 7 | Lector con dos préstamos en mora | R3, R4 | Juan David: *Cien años de soledad* (13 días) y *1984* (6 días) | 1 vez en R3 y 2 veces en R4 | R3: 1 · R4: 2 | ✅ Sí |
-| 8 | Lector sin ningún préstamo | Todos | 12 lectores (documentos 1000000009 a 1000000020) | No aparecen en R2, R3 ni R4 | 12 lectores; R2: 0 · R3: 0 · R4: 0 | ✅ Sí |
-| — | Total de filas | R1 a R4 | — | 21 · 2 · 4 · 5 | 21 · 2 · 4 · 5 | ✅ Sí |
+| 1 | Libro que nadie ha prestado | R1 | 16 libros sin préstamos, entre ellos *El olvido que seremos* | Cuenta 0, pero queda fuera del top: hay 21 libros con al menos un préstamo | Cuenta 0; fuera del top | Sí. La decisión quedó escrita en el encabezado del reporte 1. |
+| 2 | Dos libros empatados en el último puesto | R1 | 16 libros con 1 préstamo, en los puestos 6 a 21 | 21 filas: sale también el empatado del puesto 21 | 21 filas; 16 empatados con 1 | Sí |
+| 3 | Dos lectores empatados en el primer lugar | R2 | Mariana y Santiago, 5 préstamos devueltos cada uno | Salen los dos | Mariana y Santiago, 5 | Sí |
+| 4 | Lector con varios préstamos abiertos y ninguno devuelto | R2 | Juan David (2 abiertos, 0 devueltos) y Camila (6 préstamos, 3 devueltos) | No sale ninguno | No sale ninguno | Sí. La regla de máximo 3 préstamos abiertos impide que un lector sin devoluciones tenga más préstamos que los ganadores (5). Por eso Camila cubre la parte de "más préstamos que los ganadores". |
+| 5 | Préstamo devuelto después de la fecha esperada | R3, R4 | Santiago devolvió el Quijote 6 días tarde | No es mora: 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | Sí |
+| 6 | Préstamo abierto que vence hoy | R3, R4 | Isabella: la Rayuela, su único préstamo abierto | Regla `<`: no es mora; 0 veces en R3 y 0 en R4 | R3: 0 · R4: 0 | Sí, **después de corregir los datos.** El préstamo era de Juan David, que ya sale en R3 por otros dos préstamos, así que en R3 el caso no se notaba. Se pasó a Isabella. Prueba de control: con `<=`, la verificación da `R3: 1 · R4: 1` y marca `NO`. |
+| 7 | Lector con dos préstamos en mora | R3, R4 | Juan David: *Cien años de soledad* (13 días) y *1984* (6 días) | 1 vez en R3 y 2 veces en R4 | R3: 1 · R4: 2 | Sí |
+| 8 | Lector sin ningún préstamo | Todos | 12 lectores (documentos 1000000009 a 1000000020) | No aparecen en R2, R3 ni R4 | 12 lectores; R2: 0 · R3: 0 · R4: 0 | Sí |
+| — | Total de filas | R1 a R4 | — | 21 · 2 · 4 · 5 | 21 · 2 · 4 · 5 | Sí |
 
 #### 8.4.7 Checkpoint del Hito 2
 
 | Pieza | Dónde quedó | Sesión | Estado |
 |---|---|---|---|
-| Esquema que corre limpio desde `postgres/init/` con la base vacía | `postgres/init/01_esquema.sql` (y `02_carga.sql`) | S14 | ✅ |
-| Carga de libros y lectores desde CSV, con el semilla y con un CSV propio | `postgres/scripts/carga-*.sql` y `postgres/scripts/datos/` | S14 | ✅ |
-| Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md) | S14 | ✅ |
-| Las consultas de los 4 reportes, documentadas | `postgres/scripts/reportes.sql` y `datos-prueba.sql` | S16 | ✅ |
+| Esquema que corre limpio desde `postgres/init/` con la base vacía | `postgres/init/01_esquema.sql` (y `02_carga.sql`) | S14 | Hecho |
+| Carga de libros y lectores desde CSV, con el semilla y con un CSV propio | `postgres/scripts/carga-*.sql` y `postgres/scripts/datos/` | S14 | Hecho |
+| Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md) | S14 | Hecho |
+| Las consultas de los 4 reportes, documentadas | `postgres/scripts/reportes.sql` y `datos-prueba.sql` | S16 | Hecho |
 
 No quedó nada pendiente de S14.
 
