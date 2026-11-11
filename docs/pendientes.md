@@ -6,10 +6,12 @@ Lista de trabajo que **todavía no se ha hecho**. Lo ya entregado (S14, los 4 re
 
 ## Para cerrar la entrega del Hito 2 (S16)
 
-El código y la documentación del taller S16 están completos (README, sección 8.4). Falta solo la entrega:
+El código, la documentación y las evidencias del taller S16 están completos (README, secciones 8.4 y 9). Falta solo la entrega:
 
-- [ ] Correr en Docker, seguidos y el mismo día: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`. La verificación debe dar `sí` en las 9 filas.
-- [ ] Hacer `git push` a la rama `main`.
+- [x] Correr en Docker, seguidos y el mismo día: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`. La verificación dio `sí` en las 9 filas.
+- [x] Correr la Parte A en Docker: 11 de 11.
+- [x] Capturas de S16 en `assets/paso8-*.png`.
+- [x] Hacer `git push` a la rama `main`.
 - [ ] Invitar al profesor como colaborador del repositorio privado (*Settings → Collaborators*). Sin eso, no puede ver el repositorio.
 - [ ] Subir al campus un `.txt` con el enlace del repositorio.
 
@@ -18,7 +20,6 @@ El código y la documentación del taller S16 están completos (README, sección
 | Qué | Detalle |
 |---|---|
 | Retos R1 a R3 del taller S16 | R1: el ejercicio 11 con `GROUP BY` + `HAVING count(…) = …` (y por qué `count(*)` no da lo mismo que `count(DISTINCT …)`); R2: las dos versiones del 11 con una categoría sin productos; R3: comparar lo que gastó cada cliente referido con lo que gastó quien lo refirió. |
-| Capturas nuevas de S16 | Captura de `verificacion-parte-b.sql`. Las capturas de los reportes (`assets/paso7-*.png`) siguen siendo válidas, porque los resultados no cambiaron. |
 
 ## Siguientes hitos
 

@@ -115,6 +115,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 09/11/2026 | Prueba completa desde una base vacía (`init/` crea los dos esquemas solo), carga del CSV propio (5 cargadas, 4 rechazadas), prueba de la última línea de defensa y publicación del repositorio en GitHub. |
 | 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
 | 10/11/2026 | **Cierre del taller S16 (Hito 2).** Se comparó el repositorio con la guía de S16, punto por punto. Cambios: `datos-prestamos.sql` pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía), con el resultado esperado de cada reporte y de los 8 casos escrito en el encabezado; cada reporte de `reportes.sql` lleva su resultado esperado y queda guardado como vista; nuevo `verificacion-parte-b.sql`, que arma la tabla de verificación desde esas vistas. Al revisar los casos se encontró que el caso 6 (préstamo que vence hoy) no se notaba en el reporte 3, porque Juan David ya era moroso por otros préstamos. Ese préstamo pasó a Isabella, que no tiene otro abierto, y los 4 reportes siguieron dando lo mismo. Prueba de control: con `<=` en vez de `<`, la verificación marca el caso 6 como `NO`. En `parte-a.sql` se agregó la respuesta a la pregunta del ejercicio 5. |
+| 10/11/2026 | **Corrida final de S16 en el Docker del grupo**, en el orden de la guía: `datos-prueba.sql` (`30 \| 20 \| 10 \| 5`), `reportes.sql` (21, 2, 4 y 5 filas, con las 4 vistas), `verificacion-parte-b.sql` (**9 de 9 coinciden**) y la Parte A (**11 de 11**). Las salidas reales quedaron en `docs/evidencias.md` (secciones 9 a 12) y las capturas, en `assets/paso8-*.png`. |
 
 ## 4. El esquema `biblioteca`
 
@@ -306,7 +307,7 @@ El taller tiene dos partes. La **parte A** son 11 ejercicios sobre un esquema de
 | 1 | `parte-a.sql`: las 11 consultas, cada una con su número y, en la 9, la explicación | [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) |
 | 2 | `datos-prueba.sql` y `reportes.sql`, en `postgres/scripts/` | [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) y [`reportes.sql`](postgres/scripts/reportes.sql) |
 | 3 | Tabla de verificación de la parte B: caso, esperado, obtenido y qué se corrigió | [Sección 8.4.6](#846-tabla-de-verificación-de-la-parte-b), generada por [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) |
-| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 9 a 11 (copiadas de la terminal del grupo), y las capturas de la [sección 9](#9-evidencias) |
+| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 9 a 11 (copiadas de la terminal del grupo), y las capturas `paso8-*.png` de la [sección 9](#9-evidencias) |
 
 #### 8.4.2 Parte A: ejercicios sobre `tienda`
 
@@ -317,7 +318,7 @@ El taller tiene dos partes. La **parte A** son 11 ejercicios sobre un esquema de
 
 Los ejercicios practican: joins de varias tablas, self-join con `LEFT JOIN` (quién refirió a quién), anti-join (productos nunca vendidos), contar ceros con `count(columna)`, `GROUP BY` con `HAVING`, subconsulta correlacionada, `EXISTS`, la trampa de `NOT IN` con `NULL` (y su corrección con `NOT EXISTS`), el máximo con empates y la división con `NOT EXISTS` doble.
 
-**Resultado:** los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql` (comandos en la sección 2, paso 4).
+**Resultado:** los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Evidencia: [`docs/evidencias.md`, sección 12](docs/evidencias.md#12-taller-s16-parte-a) y la captura [`assets/paso8-parte-a.png`](assets/paso8-parte-a.png). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql` (comandos en la sección 2, paso 4).
 
 #### 8.4.3 Parte A: las preguntas de la sesión
 
@@ -386,9 +387,10 @@ No quedó nada pendiente de S14.
 | Totales: los 14 rechazos | [6](docs/evidencias.md#6-totales-después-de-las-4-cargas) |
 | **CSV propio** (y su repetición sin duplicar) | [7](docs/evidencias.md#7-csv-propio) |
 | **Prueba de la última línea de defensa** (y la regla restaurada) | [8](docs/evidencias.md#8-prueba-de-la-última-línea-de-defensa) |
-| Préstamos de prueba (dos corridas) | [9](docs/evidencias.md#9-préstamos-de-prueba) |
+| Préstamos de prueba (corrida final de S16 y las dos corridas de S15) | [9](docs/evidencias.md#9-préstamos-de-prueba) |
 | **Los 4 reportes con los datos de prueba** (S16, parte B) | [10](docs/evidencias.md#10-los-4-reportes) |
 | **Tabla de verificación de la parte B** (S16) | [11](docs/evidencias.md#11-verificación-de-la-parte-b) |
+| **Taller S16, Parte A** (los 11 ejercicios) | [12](docs/evidencias.md#12-taller-s16-parte-a) |
 
 **Capturas de pantalla** (en [`assets/`](assets/)). Para las cargas 3 y 4, el CSV propio y la prueba de la última línea de defensa, la evidencia es la salida en texto de la tabla anterior.
 
@@ -404,14 +406,24 @@ Carga 2, libros con errores (los 8 errores, cada uno con su motivo):
 Carga 1 repetida: las 32 filas salen rechazadas por `isbn ya existe en el catálogo` y los totales no cambian. **Repetir la carga no duplica.**
 ![Carga 1 repetida](assets/carga1-libros-limpio-repetida.png)
 
-Préstamos de prueba, dos corridas seguidas (`30 | 20 | 10 | 5` las dos veces). La captura es de cuando el script se llamaba `datos-prestamos.sql`; `datos-prueba.sql` da exactamente el mismo resumen:
-![Préstamos de prueba](assets/paso6-datos-prestamos.png)
+**Taller S16 (cierre del Hito 2): corrida final en el Docker del grupo**, en el orden de la guía.
 
-Reportes 1 y 2 (los resultados no cambiaron con los ajustes de S16; ver [`docs/evidencias.md`](docs/evidencias.md#10-los-4-reportes)):
-![Reportes 1 y 2](assets/paso7-reportes-1-2.png)
+Préstamos de prueba con `datos-prueba.sql` (`30 | 20 | 10 | 5`):
+![Préstamos de prueba (S16)](assets/paso8-datos-prueba.png)
 
-Reportes 3 y 4:
-![Reportes 3 y 4](assets/paso7-reportes-3-4.png)
+Reporte 1: los 20 libros más prestados (21 filas, por el empate en el puesto 20):
+![Reporte 1](assets/paso8-reporte-1.png)
+
+Reportes 2, 3 y 4 (cada `CREATE VIEW` es la vista de un reporte):
+![Reportes 2, 3 y 4](assets/paso8-reportes-2-3-4.png)
+
+**Tabla de verificación de la parte B: los 8 casos, 9 de 9 coinciden:**
+![Verificación de la parte B](assets/paso8-verificacion.png)
+
+Parte A: los 11 ejercicios sobre el esquema `tienda`, cada uno con las filas esperadas:
+![Parte A](assets/paso8-parte-a.png)
+
+**Capturas anteriores (S15).** Mismos resultados, con el script cuando se llamaba `datos-prestamos.sql` y los reportes antes de guardarse como vistas: [préstamos de prueba, dos corridas](assets/paso6-datos-prestamos.png) (muestra que el script se puede repetir), [reportes 1 y 2](assets/paso7-reportes-1-2.png) y [reportes 3 y 4](assets/paso7-reportes-3-4.png).
 
 ## 10. Lecciones aprendidas
 

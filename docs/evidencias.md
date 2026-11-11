@@ -15,6 +15,7 @@ Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejec
 9. [Préstamos de prueba](#9-préstamos-de-prueba)
 10. [Los 4 reportes](#10-los-4-reportes)
 11. [Verificación de la parte B](#11-verificación-de-la-parte-b)
+12. [Taller S16, Parte A](#12-taller-s16-parte-a)
 
 ---
 
@@ -409,7 +410,7 @@ COMMIT
 
 ## 9. Préstamos de prueba
 
-**Corrida final de S16** con `datos-prueba.sql`, el 10/11/2026 en la noche (hora de Colombia), en el orden de la guía: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`, seguidos.
+**Corrida final de S16** con `datos-prueba.sql`, el 10/11/2026 en la noche (hora de Colombia), en el orden de la guía: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`, seguidos. Captura: [`../assets/paso8-datos-prueba.png`](../assets/paso8-datos-prueba.png).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
@@ -467,7 +468,7 @@ COMMIT
 
 ## 10. Los 4 reportes
 
-Salida de `reportes.sql` justo después de la corrida final de `datos-prueba.sql`. Cada `CREATE VIEW` es la vista de un reporte. Los 4 coinciden con el resultado esperado escrito en el encabezado de `datos-prueba.sql`: **21, 2, 4 y 5 filas**.
+Salida de `reportes.sql` justo después de la corrida final de `datos-prueba.sql`. Capturas: [`../assets/paso8-reporte-1.png`](../assets/paso8-reporte-1.png) y [`../assets/paso8-reportes-2-3-4.png`](../assets/paso8-reportes-2-3-4.png). Cada `CREATE VIEW` es la vista de un reporte. Los 4 coinciden con el resultado esperado escrito en el encabezado de `datos-prueba.sql`: **21, 2, 4 y 5 filas**.
 
 El contenedor usa la hora UTC, que a esa hora ya iba en el 11/11. Por eso las fechas de vencimiento del reporte 4 van un día después que en las capturas de S15 (`paso7-*.png`); los **días de mora** son los mismos (31, 13, 7, 6 y 2), porque todo es relativo a `CURRENT_DATE`.
 
@@ -537,7 +538,7 @@ CREATE VIEW
 
 ## 11. Verificación de la parte B
 
-Salida de `verificacion-parte-b.sql`, justo después de los reportes. Las 9 filas coinciden con lo esperado. Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
+Salida de `verificacion-parte-b.sql`, justo después de los reportes. Las 9 filas coinciden con lo esperado. Captura: [`../assets/paso8-verificacion.png`](../assets/paso8-verificacion.png). Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
@@ -567,3 +568,119 @@ Pager usage is off.
 ```
 
 Después se restauró `<` y las 9 filas volvieron a coincidir.
+
+## 12. Taller S16, Parte A
+
+Primero `S16-tienda.sql` (crea el esquema `tienda`) y después `parte-a.sql`. Los 11 ejercicios devuelven las filas esperadas que anota cada uno: **2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2**. Captura: [`../assets/paso8-parte-a.png`](../assets/paso8-parte-a.png).
+
+```text
+PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql
+psql:/scripts/S16-tienda.sql:14: NOTICE:  schema "tienda" does not exist, skipping
+DROP SCHEMA
+CREATE SCHEMA
+SET
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 8
+INSERT 0 10
+INSERT 0 14
+INSERT 0 23
+PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
+Pager usage is off.
+SET
+== Ejercicio 1 (esperadas: 2) ==
+   cliente   |          producto          | cantidad | subtotal
+-------------+----------------------------+----------+----------
+ Laura Ortiz | Café de origen Cauca 500 g |        1 |    40000
+ Laura Ortiz | Prensa francesa            |        1 |    95000
+(2 rows)
+
+== Ejercicio 2 (esperadas: 8) ==
+     cliente      |  referido_por
+------------------+-----------------
+ Andrés Mejía     | Laura Ortiz
+ Daniela Rincón   | Felipe Cárdenas
+ Felipe Cárdenas  |
+ Jorge Salazar    |
+ Laura Ortiz      |
+ Natalia Quintero | Paula Restrepo
+ Óscar Vélez      |
+ Paula Restrepo   | Laura Ortiz
+(8 rows)
+
+== Ejercicio 3 (esperadas: 1) ==
+      nombre
+------------------
+ Taza de cerámica
+(1 row)
+
+== Ejercicio 4 (esperadas: 8) ==
+      nombre      | pedidos
+------------------+---------
+ Andrés Mejía     |       3
+ Felipe Cárdenas  |       3
+ Laura Ortiz      |       3
+ Paula Restrepo   |       2
+ Daniela Rincón   |       1
+ Natalia Quintero |       1
+ Óscar Vélez      |       1
+ Jorge Salazar    |       0
+(8 rows)
+
+== Ejercicio 5 (esperadas: 3) ==
+ categoria | total
+-----------+--------
+ Grano     | 480000
+ Accesorio | 376000
+ Molido    | 184000
+(3 rows)
+
+== Ejercicio 6 (esperadas: 2) ==
+ mes | total
+-----+--------
+   2 | 255000
+   4 | 393000
+(2 rows)
+
+== Ejercicio 7 (esperadas: 4) ==
+           nombre            | categoria | precio
+-----------------------------+-----------+--------
+ Molino manual               | Accesorio | 150000
+ Prensa francesa             | Accesorio |  95000
+ Café de origen Nariño 500 g | Grano     |  42000
+ Café molido premium 500 g   | Molido    |  30000
+(4 rows)
+
+== Ejercicio 8 (esperadas: 2) ==
+     nombre
+----------------
+ Daniela Rincón
+ Laura Ortiz
+(2 rows)
+
+== Ejercicio 9 (esperadas: 5) ==
+      nombre
+------------------
+ Andrés Mejía
+ Daniela Rincón
+ Jorge Salazar
+ Natalia Quintero
+ Óscar Vélez
+(5 rows)
+
+== Ejercicio 10 (esperadas: 2) ==
+      nombre      | total
+------------------+--------
+ Laura Ortiz      | 287000
+ Natalia Quintero | 287000
+(2 rows)
+
+== Ejercicio 11 (esperadas: 2) ==
+     nombre
+-----------------
+ Felipe Cárdenas
+ Laura Ortiz
+(2 rows)
+```
