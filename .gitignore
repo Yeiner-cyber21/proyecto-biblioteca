@@ -14,3 +14,7 @@ node/proyecto/*
 
 # Variables de entorno locales (si el estudiante personalizó credenciales/puertos).
 .env
+
+# Datos locales de pgAdmin: base de datos y sesiones
+pgadmin/data/*
+!pgadmin/data/.gitkeep
