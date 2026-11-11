@@ -23,6 +23,7 @@ Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está
 8. [Los 4 reportes](#8-los-4-reportes)
 9. [Evidencias](#9-evidencias)
 10. [Lecciones aprendidas](#10-lecciones-aprendidas)
+11. [Taller S18: formas normales](#11-taller-s18-formas-normales)
 
 ---
 
@@ -47,6 +48,8 @@ proyecto-biblioteca/
 │   │   ├── verificacion-parte-b.sql ← S16 parte B: tabla de verificación de los 8 casos
 │   │   ├── S16-tienda.sql           ← taller S16: esquema de práctica "tienda" (script del profesor)
 │   │   ├── parte-a.sql              ← taller S16, Parte A: los 11 ejercicios resueltos por el grupo
+│   │   ├── S18-automotriz.sql       ← taller S18: planilla plana del taller "El Pistón" (script del profesor)
+│   │   ├── normalizacion.sql        ← taller S18, Parte B: la planilla llevada a 3FN, con verificación
 │   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
 │   └── data/                        ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json             ← conexión a PostgreSQL precargada en pgAdmin
@@ -55,6 +58,7 @@ proyecto-biblioteca/
 │   ├── mapeo-y-criterios.md         ← mapeo CSV → esquema y criterios por tipo de error
 │   ├── evidencias.md                ← salidas de psql de todas las ejecuciones
 │   ├── README-entorno-docker.md     ← README original del entorno del profesor
+│   ├── S18-taller-normalizacion.md  ← taller S18: partes A1, A2 y C (formas normales)
 │   └── pendientes.md                ← lo que falta (S15, S16 y los siguientes hitos)
 └── assets/                          ← capturas de las ejecuciones
 ```
@@ -116,6 +120,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
 | 10/11/2026 | **Cierre del taller S16 (Hito 2).** Se comparó el repositorio con la guía de S16, punto por punto. Cambios: `datos-prestamos.sql` pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía), con el resultado esperado de cada reporte y de los 8 casos escrito en el encabezado; cada reporte de `reportes.sql` lleva su resultado esperado y queda guardado como vista; nuevo `verificacion-parte-b.sql`, que arma la tabla de verificación desde esas vistas. Al revisar los casos se encontró que el caso 6 (préstamo que vence hoy) no se notaba en el reporte 3, porque Juan David ya era moroso por otros préstamos. Ese préstamo pasó a Isabella, que no tiene otro abierto, y los 4 reportes siguieron dando lo mismo. Prueba de control: con `<=` en vez de `<`, la verificación marca el caso 6 como `NO`. En `parte-a.sql` se agregó la respuesta a la pregunta del ejercicio 5. |
 | 10/11/2026 | **Corrida final de S16 en el Docker del grupo**, en el orden de la guía: `datos-prueba.sql` (`30 \| 20 \| 10 \| 5`), `reportes.sql` (21, 2, 4 y 5 filas, con las 4 vistas), `verificacion-parte-b.sql` (**9 de 9 coinciden**) y la Parte A (**11 de 11**). Las salidas reales quedaron en `docs/evidencias.md` (secciones 9 a 12) y las capturas, en `assets/paso8-*.png`. |
+| 11/11/2026 | **Taller S18 (formas normales).** Se agregó el script del profesor `S18-automotriz.sql` y se resolvió el taller: A2 (1FN → 2FN → 3FN, con el esquema final en FNBC), la Parte B en `normalizacion.sql` y la Parte C (3FN frente a FNBC), en `docs/S18-taller-normalizacion.md`. La Parte B encontró una contradicción en la planilla (dos teléfonos para Jorge Mejía), la corrigió y reconstruyó la planilla exacta con `EXCEPT` (0 filas en los dos sentidos). Todo se probó en PostgreSQL 16. |
 
 ## 4. El esquema `biblioteca`
 
@@ -437,3 +442,30 @@ Parte A: los 11 ejercicios sobre el esquema `tienda`, cada uno con las filas esp
 - **Un caso de prueba solo prueba algo si puede fallar.** El préstamo que "vence hoy" no se notaba en el reporte 3 porque su lector ya era moroso por otros préstamos: con `<` o con `<=` el reporte salía igual. Se aisló en una lectora sin otros préstamos abiertos, y se comprobó cambiando `<` por `<=` a propósito: la verificación lo detectó.
 - **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
 - **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.
+
+## 11. Taller S18: formas normales
+
+Taller sobre un esquema de práctica del profesor: la planilla de servicios del Taller Automotriz El Pistón. Vive en su propio esquema, `automotriz`, así que **no toca** `biblioteca`. El desarrollo completo, con cada paso justificado, está en [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md).
+
+| Parte | Dónde | Qué se hizo |
+|---|---|---|
+| A1. Diagnóstico | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-a1-diagnóstico) | Claves, forma normal y lo que impide subir, para cada relación de la guía; la pregunta de `telefonos` y los grupos repetidos |
+| A2. El Pistón hasta 3FN | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-a2-el-pistón-hasta-3fn) | 7 dependencias funcionales con su regla del negocio; `(num_orden, cod_servicio)` como única clave (por cierre); 2FN, 3FN y comprobación de FNBC; el dueño del día de la orden |
+| B. En PostgreSQL | [`postgres/scripts/normalizacion.sql`](postgres/scripts/normalizacion.sql) | Limpieza de una contradicción, 7 tablas con PK, FK y `NOT NULL`, carga con `SELECT DISTINCT`, reconstrucción exacta con `EXCEPT` y las 3 anomalías de S17 eliminadas |
+| C. 3FN frente a FNBC | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-c-3fn-frente-a-fnbc) | `responsable` está en 3FN pero no en FNBC; la FNBC pierde una regla; se recomienda 3FN con una FK compuesta (probado en PostgreSQL) |
+
+**Esquema final (3FN y FNBC):**
+```
+dueno (cedula_dueno PK, …)      modelo (modelo PK, marca)      mecanico (cod_mecanico PK, …)
+vehiculo (placa PK, modelo FK, cedula_dueno FK)
+orden (num_orden PK, fecha_ingreso, kilometraje, placa FK)
+servicio (cod_servicio PK, nombre_servicio, precio_lista)
+orden_servicio (num_orden FK, cod_servicio FK, precio_cobrado, cod_mecanico FK)   PK (num_orden, cod_servicio)
+```
+
+**Cómo ejecutarlo:**
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
+```
+Resultado esperado: en (a), una sola contradicción (la cédula 16700002) y `UPDATE 1`; en (c), 3, 4, 4, 6, 5, 3 y 11 filas; en (d), 11 y 11 filas y **0 filas** en los dos `EXCEPT`; en (e), las tres pruebas con `ROLLBACK` y, al final, 11 líneas de orden y 6 órdenes.
