@@ -1,6 +1,6 @@
 # Evidencias de ejecución
 
-Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. Las salidas de S16 que no vienen de esa terminal (el reporte 4 en texto y la verificación de la parte B, secciones 10 y 11) lo dicen en su sección. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`../assets/`](../assets/).
+Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. La única salida que no viene de esa terminal es la prueba de control de la sección 11, y lo dice ahí. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`../assets/`](../assets/).
 
 ## Contenido
 
@@ -409,9 +409,27 @@ COMMIT
 
 ## 9. Préstamos de prueba
 
-> En S16 el script pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía) y el préstamo que vence hoy pasó de Juan David a Isabella. El resumen sigue siendo `30 | 20 | 10 | 5`.
+**Corrida final de S16** con `datos-prueba.sql`, el 10/11/2026 en la noche (hora de Colombia), en el orden de la guía: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`, seguidos.
 
-Dos corridas seguidas de `datos-prestamos.sql`: da lo mismo, así que **se puede repetir**. Los `DELETE` del inicio son los datos de la corrida anterior, que el script borra antes de volver a crearlos.
+```text
+PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
+Pager usage is off.
+BEGIN
+DELETE 30
+DELETE 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 30
+COMMIT
+
+=== Préstamos de prueba (esperado: 30 | 20 | 10 | 5)
+ prestamos | devueltos | abiertos | en_mora
+-----------+-----------+----------+---------
+        30 |        20 |       10 |       5
+(1 row)
+```
+
+**Antes (S15).** Dos corridas seguidas del mismo script, cuando todavía se llamaba `datos-prestamos.sql`: dan lo mismo, así que **se puede repetir**. Los `DELETE` del inicio son los datos de la corrida anterior, que el script borra antes de volver a crearlos. En S16, además del nombre, el préstamo que vence hoy pasó de Juan David a Isabella; el resumen sigue siendo `30 | 20 | 10 | 5`.
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prestamos.sql
@@ -449,11 +467,14 @@ COMMIT
 
 ## 10. Los 4 reportes
 
-Los 4 reportes completos están en las capturas [`../assets/paso7-reportes-1-2.png`](../assets/paso7-reportes-1-2.png) y [`../assets/paso7-reportes-3-4.png`](../assets/paso7-reportes-3-4.png). Abajo, los reportes 1, 2 y 3 en texto, copiados de la terminal del grupo. Los cambios de S16 (encabezados con el resultado esperado, las vistas y el préstamo de Isabella) **no cambiaron ninguna fila**: con `datos-prueba.sql` y el `reportes.sql` final, los 4 reportes dan las mismas 21, 2, 4 y 5 filas.
+Salida de `reportes.sql` justo después de la corrida final de `datos-prueba.sql`. Cada `CREATE VIEW` es la vista de un reporte. Los 4 coinciden con el resultado esperado escrito en el encabezado de `datos-prueba.sql`: **21, 2, 4 y 5 filas**.
+
+El contenedor usa la hora UTC, que a esa hora ya iba en el 11/11. Por eso las fechas de vencimiento del reporte 4 van un día después que en las capturas de S15 (`paso7-*.png`); los **días de mora** son los mismos (31, 13, 7, 6 y 2), porque todo es relativo a `CURRENT_DATE`.
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
 Pager usage is off.
+CREATE VIEW
 
 == Reporte 1. Los 20 libros más prestados (con empates en el puesto 20) ==
      isbn      |               titulo               | prestamos
@@ -481,6 +502,7 @@ Pager usage is off.
  9780000000015 | Un mundo feliz                     |         1
 (21 rows)
 
+CREATE VIEW
 
 == Reporte 2. El o los lectores que más libros han leído (préstamos devueltos) ==
  documento  | nombres  |    apellidos    | devueltos
@@ -489,6 +511,7 @@ Pager usage is off.
  1000000002 | Santiago | Rodríguez Pérez |         5
 (2 rows)
 
+CREATE VIEW
 
 == Reporte 3. Lectores morosos ==
  documento  |    nombres    |    apellidos
@@ -498,33 +521,30 @@ Pager usage is off.
  1000000004 | Juan David    | Martínez Ruiz
  1000000008 | Andrés Felipe | Vargas Ortiz
 (4 rows)
-```
 
-El reporte 4 en texto. Es la salida de `psql` (PostgreSQL 16) del 10/11/2026, con los scripts finales de S16 corridos en este orden: cargas, `datos-prueba.sql` y `reportes.sql`. Las fechas de vencimiento dependen del día en que se corre `datos-prueba.sql`; los días de mora, no.
+CREATE VIEW
 
-```text
 == Reporte 4. Préstamos en mora (lista de notificación) ==
-           lector           |                  correo                  |  telefono  |        titulo        | copia | fecha_vencimiento | dias_mora 
+           lector           |                  correo                  |  telefono  |        titulo        | copia | fecha_vencimiento | dias_mora
 ----------------------------+------------------------------------------+------------+----------------------+-------+-------------------+-----------
- Sebastián González Morales | sebastian.gonzalez@correo-ejemplo.edu.co | 3001000006 | Crimen y castigo     |     1 | 2026-10-10        |        31
- Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | Cien años de soledad |     4 | 2026-10-28        |        13
- Valentina López Díaz       | valentina.lopez@correo-ejemplo.edu.co    | 3001000003 | La sombra del viento |     1 | 2026-11-03        |         7
- Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | 1984                 |     3 | 2026-11-04        |         6
- Andrés Felipe Vargas Ortiz | andres.vargas@correo-ejemplo.edu.co      | 3001000008 | El nombre del viento |     1 | 2026-11-08        |         2
+ Sebastián González Morales | sebastian.gonzalez@correo-ejemplo.edu.co | 3001000006 | Crimen y castigo     |     1 | 2026-10-11        |        31
+ Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | Cien años de soledad |     4 | 2026-10-29        |        13
+ Valentina López Díaz       | valentina.lopez@correo-ejemplo.edu.co    | 3001000003 | La sombra del viento |     1 | 2026-11-04        |         7
+ Juan David Martínez Ruiz   | juan.martinez@correo-ejemplo.edu.co      | 3001000004 | 1984                 |     3 | 2026-11-05        |         6
+ Andrés Felipe Vargas Ortiz | andres.vargas@correo-ejemplo.edu.co      | 3001000008 | El nombre del viento |     1 | 2026-11-09        |         2
 (5 rows)
 ```
 
 ## 11. Verificación de la parte B
 
-Salida de `verificacion-parte-b.sql` (PostgreSQL 16, 10/11/2026), justo después de `datos-prueba.sql` y `reportes.sql`. Las 9 filas coinciden con lo esperado. Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
+Salida de `verificacion-parte-b.sql`, justo después de los reportes. Las 9 filas coinciden con lo esperado. Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
 
 ```text
-docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
-```
+PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
+Pager usage is off.
 
-```text
 == Verificación de la parte B: los 8 casos de prueba de la guía S16 ==
- caso  |  reporte   |                      prueba                       |              esperado              |              obtenido              | coincide 
+ caso  |  reporte   |                      prueba                       |              esperado              |              obtenido              | coincide
 -------+------------+---------------------------------------------------+------------------------------------+------------------------------------+----------
  1     | R1         | Libro sin préstamos (El olvido que seremos)       | cuenta 0; fuera del top            | cuenta 0; fuera del top            | sí
  2     | R1         | Empate en el último puesto del top                | 21 filas; 16 empatados con 1       | 21 filas; 16 empatados con 1       | sí
@@ -538,7 +558,7 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-par
 (9 rows)
 ```
 
-**Prueba de control.** Se cambió a propósito `<` por `<=` en los reportes 3 y 4 y se volvió a correr la verificación. El caso 6 dejó de coincidir, como debía: la verificación sí detecta un error en la regla de mora.
+**Prueba de control** (hecha al preparar la entrega, en una copia de PostgreSQL 16 fuera del Docker del grupo). Se cambió a propósito `<` por `<=` en los reportes 3 y 4 y se volvió a correr la verificación. El caso 6 dejó de coincidir, como debía: la verificación sí detecta un error en la regla de mora.
 
 ```text
  6     | R3, R4     | Isabella: su préstamo vence hoy (regla <)         | R3: 0 · R4: 0                      | R3: 1 · R4: 1                      | NO

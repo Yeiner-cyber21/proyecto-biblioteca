@@ -306,7 +306,7 @@ El taller tiene dos partes. La **parte A** son 11 ejercicios sobre un esquema de
 | 1 | `parte-a.sql`: las 11 consultas, cada una con su número y, en la 9, la explicación | [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) |
 | 2 | `datos-prueba.sql` y `reportes.sql`, en `postgres/scripts/` | [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) y [`reportes.sql`](postgres/scripts/reportes.sql) |
 | 3 | Tabla de verificación de la parte B: caso, esperado, obtenido y qué se corrigió | [Sección 8.4.6](#846-tabla-de-verificación-de-la-parte-b), generada por [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) |
-| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 10 y 11, y las capturas de la sección 9 |
+| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 9 a 11 (copiadas de la terminal del grupo), y las capturas de la [sección 9](#9-evidencias) |
 
 #### 8.4.2 Parte A: ejercicios sobre `tienda`
 
@@ -369,6 +369,8 @@ Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió ant
 | Carga de libros y lectores desde CSV, con el semilla y con un CSV propio | `postgres/scripts/carga-*.sql` y `postgres/scripts/datos/` | S14 | ✅ |
 | Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md) | S14 | ✅ |
 | Las consultas de los 4 reportes, documentadas | `postgres/scripts/reportes.sql` y `datos-prueba.sql` | S16 | ✅ |
+
+No quedó nada pendiente de S14.
 
 ## 9. Evidencias
 
