@@ -4,15 +4,15 @@
 
 | Archivo | Qué es |
 |---|---|
-| [`postgres/scripts/S19-esquemas.sql`](../postgres/scripts/S19-esquemas.sql) | Script del profesor: los cuatro esquemas "en producción" (`gimnasio`, `farmacia`, `cursos_libres`, `envios`). |
-| [`postgres/scripts/casos.sql`](../postgres/scripts/casos.sql) | **Parte A**: los cuatro casos, con (a) diagnóstico, (b) evidencia, (c) esquema, (d) migración, (e) verificación y la pregunta propia, en comentarios y SQL. |
-| [`postgres/scripts/parte-b-evidencia.sql`](../postgres/scripts/parte-b-evidencia.sql) | **Parte B**: una consulta de evidencia por tabla del esquema `biblioteca`. Solo lee: no cambia nada. |
+| [`postgres/scripts/hito3/taller-S19/S19-esquemas.sql`](../../postgres/scripts/hito3/taller-S19/S19-esquemas.sql) | Script del profesor: los cuatro esquemas "en producción" (`gimnasio`, `farmacia`, `cursos_libres`, `envios`). |
+| [`postgres/scripts/hito3/taller-S19/casos.sql`](../../postgres/scripts/hito3/taller-S19/casos.sql) | **Parte A**: los cuatro casos, con (a) diagnóstico, (b) evidencia, (c) esquema, (d) migración, (e) verificación y la pregunta propia, en comentarios y SQL. |
+| [`postgres/scripts/hito3/parte-b-evidencia.sql`](../../postgres/scripts/hito3/parte-b-evidencia.sql) | **Parte B**: una consulta de evidencia por tabla del esquema `biblioteca`. Solo lee: no cambia nada. |
 
 **Cómo correrlo** (desde la carpeta del proyecto):
 
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/casos.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/parte-b-evidencia.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S19/casos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-evidencia.sql
 ```
 
 `casos.sql` empieza volviendo a correr `S19-esquemas.sql` (con `\ir`), así que siempre parte de los datos originales y se puede repetir.
@@ -245,7 +245,7 @@ Por eso se agrega `tarifa_kg_aplicada` a `envio`, copiada de la zona al registra
 
 ## Parte B: el esquema del proyecto (`biblioteca`)
 
-Examen de cada tabla con la tabla de señales de la pre-lectura. Las consultas de evidencia están en [`parte-b-evidencia.sql`](../postgres/scripts/parte-b-evidencia.sql) y se corrieron con los datos de S14 y S16 (37 libros, 20 lectores y 30 préstamos). Como las fechas de `datos-prueba.sql` son relativas, se vuelve a correr ese script el mismo día, antes de la evidencia: si no, los préstamos que vencieron después cuentan como mora. En esta sesión **no se migra** el proyecto: los cambios propuestos son para S20.
+Examen de cada tabla con la tabla de señales de la pre-lectura. Las consultas de evidencia están en [`parte-b-evidencia.sql`](../../postgres/scripts/hito3/parte-b-evidencia.sql) y se corrieron con los datos de S14 y S16 (37 libros, 20 lectores y 30 préstamos). Como las fechas de `datos-prueba.sql` son relativas, se vuelve a correr ese script el mismo día, antes de la evidencia: si no, los préstamos que vencieron después cuentan como mora. En esta sesión **no se migra** el proyecto: los cambios propuestos son para S20.
 
 | Tabla | Claves candidatas | Dependencias (con su regla) | Forma normal más alta | Problema encontrado | Evidencia (consulta) | Cambio propuesto |
 |---|---|---|---|---|---|---|
@@ -270,6 +270,6 @@ Las tablas `carga.stg_*` son **tablas de paso**: se vacían en cada carga y no f
 
 | # | La guía pide | Archivo |
 |---|---|---|
-| 1 | `casos.sql`: los cuatro casos, con (a)–(e) y la pregunta propia | [`postgres/scripts/casos.sql`](../postgres/scripts/casos.sql) |
+| 1 | `casos.sql`: los cuatro casos, con (a)–(e) y la pregunta propia | [`postgres/scripts/hito3/taller-S19/casos.sql`](../../postgres/scripts/hito3/taller-S19/casos.sql) |
 | 2 | La salida de `psql` de las consultas de evidencia y de verificación | La salida de `casos.sql` y de `parte-b-evidencia.sql` |
 | 3 | La tabla de la parte B, completa para todas las tablas del proyecto | Este documento, sección "Parte B" |

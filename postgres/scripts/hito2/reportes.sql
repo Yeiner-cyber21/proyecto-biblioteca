@@ -4,7 +4,7 @@
 --
 -- Requisito: haber corrido las cargas y datos-prueba.sql (el mismo día).
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/reportes.sql
 --
 -- Cada reporte queda guardado como VISTA (sugerencia de S16 para la API de
 -- M7): una consulta con nombre que se usa como una tabla. El script crea

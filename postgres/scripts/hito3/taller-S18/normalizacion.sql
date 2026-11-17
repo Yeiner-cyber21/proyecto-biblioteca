@@ -5,15 +5,15 @@
 -- "automotriz" con la tabla plana servicio_plano (11 filas, 6 órdenes).
 --
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
---   docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/S18-automotriz.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/normalizacion.sql
 --
 -- Re-ejecutable: borra y vuelve a crear sus propias tablas y la vista.
 -- La guía pide hacer (e) después de (d), porque (e) modifica los datos.
 -- Aquí cada prueba de (e) corre dentro de BEGIN … ROLLBACK: muestra el efecto
 -- y lo deshace, así que el script deja las tablas completas y se puede repetir.
 --
--- Esquema 3FN (el análisis paso a paso está en docs/S18-taller-normalizacion.md, A2):
+-- Esquema 3FN (el análisis paso a paso está en docs/hito3/S18-taller-normalizacion.md, A2):
 --   dueno          (cedula_dueno PK, nombre_dueno, telefono_dueno)
 --   modelo         (modelo PK, marca)
 --   vehiculo       (placa PK, modelo → modelo, cedula_dueno → dueno)

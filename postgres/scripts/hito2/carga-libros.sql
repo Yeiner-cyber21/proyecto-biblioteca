@@ -1,11 +1,11 @@
 -- =====================================================================
 -- carga-libros.sql  ·  Carga de libros desde CSV al esquema "biblioteca"
 -- Patrón: archivo → tabla de paso → validación → tablas finales | bitácora
--- Reglas, orden y motivos: docs/mapeo-y-criterios.md (secciones 1.1 y 2)
+-- Reglas, orden y motivos: docs/hito2/mapeo-y-criterios.md (secciones 1.1 y 2)
 --
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/carga-libros.sql
---   docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla_con_errores.csv -f /scripts/carga-libros.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/carga-libros.sql
+--   docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla_con_errores.csv -f /scripts/hito2/carga-libros.sql
 -- Sin "-v archivo=..." carga /scripts/datos/libros_semilla.csv.
 --
 -- Se corre con psql (usa meta-comandos \set, \if y la variable :'archivo').

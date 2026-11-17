@@ -7,7 +7,7 @@
 --
 -- Requisito: haber corrido datos-prueba.sql y reportes.sql (el mismo día).
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/verificacion-parte-b.sql
 --
 -- La columna "esperado" se escribió ANTES de correr los reportes (es la
 -- misma que está en el encabezado de datos-prueba.sql). Si todo está bien,

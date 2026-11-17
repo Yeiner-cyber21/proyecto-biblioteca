@@ -5,7 +5,7 @@
 -- y de lectores, porque los préstamos apuntan a esos ejemplares y lectores.
 --
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/datos-prueba.sql
 --
 -- Re-ejecutable: primero borra SUS PROPIOS datos (los préstamos registrados por
 -- la bibliotecaria de prueba y la propia bibliotecaria) y los vuelve a crear.

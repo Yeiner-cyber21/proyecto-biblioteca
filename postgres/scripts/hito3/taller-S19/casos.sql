@@ -12,7 +12,7 @@
 -- y la pregunta propia.
 --
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/casos.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S19/casos.sql
 --
 -- Re-ejecutable: la primera instrucción vuelve a correr S19-esquemas.sql,
 -- que borra y recrea los cuatro esquemas como al principio. Así la

@@ -1,8 +1,8 @@
 -- S16. Taller de consultas complejas · Parte A
 -- Esquema: tienda (crearlo antes con S16-tienda.sql)
 --
--- Uso (desde entorno-docker/, con este archivo copiado en postgres/scripts/):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
+-- Uso (PowerShell, desde la carpeta del proyecto; antes, S16-tienda.sql):
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/taller-S16/parte-a.sql
 --
 -- "Sin cancelados" quiere decir: sin los pedidos con estado = 'cancelado'.
 -- El valor de una línea es cantidad * precio_unitario, no producto.precio,

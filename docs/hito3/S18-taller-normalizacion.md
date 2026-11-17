@@ -6,8 +6,8 @@ Caso: la planilla de servicios del **Taller Automotriz El Pistón**. Scripts:
 
 | Archivo | Qué es |
 |---|---|
-| [`postgres/scripts/S18-automotriz.sql`](../postgres/scripts/S18-automotriz.sql) | Script del profesor: crea el esquema `automotriz` con la tabla plana `servicio_plano` (11 filas, 6 órdenes). |
-| [`postgres/scripts/normalizacion.sql`](../postgres/scripts/normalizacion.sql) | **Parte B**, resuelta por el grupo: limpieza, esquema 3FN, carga, reconstrucción con `EXCEPT` y las tres anomalías. |
+| [`postgres/scripts/hito3/taller-S18/S18-automotriz.sql`](../../postgres/scripts/hito3/taller-S18/S18-automotriz.sql) | Script del profesor: crea el esquema `automotriz` con la tabla plana `servicio_plano` (11 filas, 6 órdenes). |
+| [`postgres/scripts/hito3/taller-S18/normalizacion.sql`](../../postgres/scripts/hito3/taller-S18/normalizacion.sql) | **Parte B**, resuelta por el grupo: limpieza, esquema 3FN, carga, reconstrucción con `EXCEPT` y las tres anomalías. |
 
 La regla que organiza todo el taller viene de S17 (sección 6.2):
 
@@ -225,11 +225,11 @@ orden    (num_orden PK, fecha_ingreso, kilometraje,
 
 ## Parte B. La descomposición en PostgreSQL
 
-Archivo: [`postgres/scripts/normalizacion.sql`](../postgres/scripts/normalizacion.sql), con un comentario en cada paso. Se corre después de `S18-automotriz.sql`:
+Archivo: [`postgres/scripts/hito3/taller-S18/normalizacion.sql`](../../postgres/scripts/hito3/taller-S18/normalizacion.sql), con un comentario en cada paso. Se corre después de `S18-automotriz.sql`:
 
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/S18-automotriz.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/normalizacion.sql
 ```
 
 | Paso | Qué hace el script | Resultado |

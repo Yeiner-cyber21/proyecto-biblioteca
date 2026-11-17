@@ -3,7 +3,7 @@
 -- (entregable de S11, parte B: cada prueba ataca una regla de negocio distinta)
 --
 -- Uso, en la terminal:
---   docker compose exec postgres psql -U curso -d curso -f /scripts/pruebas-restricciones.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/pruebas-restricciones.sql
 -- o en pgAdmin: pegar todo en el Query Tool y ejecutar (F5); los
 -- resultados salen en la pestaña "Messages".
 --

@@ -6,66 +6,95 @@
 |---|---|
 | **Grupo** | 9 |
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Jeovany |
-| **Entrega actual** | Hito 2: esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
+| **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
+| **Hito 3** (en curso) | Normalización: talleres S18 y S19, y examen del esquema `biblioteca` (S17 a S20) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
 
+## Mapa rápido por hito
+
+Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `docs/hitoN/`.
+
+| Hito | Sesiones | Scripts | Documentos | En este README |
+|---|---|---|---|---|
+| **Hito 2**: esquema, carga desde CSV y los 4 reportes | S14 a S16 | [`postgres/scripts/hito2/`](postgres/scripts/hito2/) (taller S16 en [`taller-S16/`](postgres/scripts/hito2/taller-S16/)) y los CSV en [`postgres/scripts/datos/`](postgres/scripts/datos/) | [`docs/hito2/`](docs/hito2/): mapeo y criterios, evidencias y capturas | Secciones 4 a 9 |
+| **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/) y [`taller-S19/`](postgres/scripts/hito3/taller-S19/)) | [`docs/hito3/`](docs/hito3/): talleres S18 y S19 y la tabla del esquema | Secciones 10 y 11 |
+| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 12 |
+
 ## Contenido
 
+**General**
 1. [Estructura del repositorio](#1-estructura-del-repositorio)
 2. [Cómo levantar el proyecto desde cero](#2-cómo-levantar-el-proyecto-desde-cero)
 3. [Bitácora](#3-bitácora)
+
+**Hito 2 (S14 a S16)**
+
 4. [El esquema `biblioteca`](#4-el-esquema-biblioteca)
 5. [La carga desde CSV](#5-la-carga-desde-csv)
 6. [CSV propio del grupo](#6-csv-propio-del-grupo)
 7. [Prueba de la última línea de defensa](#7-prueba-de-la-última-línea-de-defensa)
-8. [Los 4 reportes](#8-los-4-reportes)
+8. [Los 4 reportes](#8-los-4-reportes) (incluye el taller S16, en la sección 8.4)
 9. [Evidencias](#9-evidencias)
-10. [Lecciones aprendidas](#10-lecciones-aprendidas)
-11. [Taller S18: formas normales](#11-taller-s18-formas-normales)
-12. [Taller S19: esquemas mal diseñados](#12-taller-s19-esquemas-mal-diseñados)
+
+**Hito 3 (S17 a S20)**
+
+10. [Taller S18: formas normales](#10-taller-s18-formas-normales)
+11. [Taller S19: esquemas mal diseñados](#11-taller-s19-esquemas-mal-diseñados)
+
+**Cierre**
+
+12. [Lecciones aprendidas](#12-lecciones-aprendidas)
 
 ---
 
 ## 1. Estructura del repositorio
 
-La estructura parte del entorno Docker entregado por el profesor (`entorno-docker`), sin cambios en `docker-compose.yml`.
+La estructura parte del entorno Docker entregado por el profesor (`entorno-docker`), sin cambios en `docker-compose.yml`. Los scripts siguen dentro de `postgres/scripts/`, porque es la carpeta que Docker ve como `/scripts`; adentro están separados por hito. Los tres scripts del profesor (`S16-tienda.sql`, `S18-automotriz.sql` y `S19-esquemas.sql`) están sin cambios.
 
 ```
 proyecto-biblioteca/
-├── README.md                        ← esta bitácora
-├── docker-compose.yml               ← entorno del curso: PostgreSQL 16 + pgAdmin + Node.js
+├── README.md                          ← esta bitácora (empieza con el mapa por hito)
+├── docker-compose.yml                 ← entorno del curso: PostgreSQL 16 + pgAdmin + Node.js
 ├── postgres/
-│   ├── init/                        ← se ejecuta SOLO, una vez, cuando la base está vacía
-│   │   ├── 01_esquema.sql           ← esquema "biblioteca" (biblioteca-v2 del taller S11)
-│   │   └── 02_carga.sql             ← esquema "carga": bitácora de rechazos y tablas de paso
-│   ├── scripts/                     ← se ejecutan a mano (dentro del contenedor: /scripts)
-│   │   ├── carga-libros.sql
-│   │   ├── carga-lectores.sql
-│   │   ├── pruebas-restricciones.sql
-│   │   ├── datos-prueba.sql         ← S16 parte B: bibliotecaria y 30 préstamos que cubren los 8 casos
-│   │   ├── reportes.sql             ← S16 parte B: los 4 reportes (guardados como vistas)
-│   │   ├── verificacion-parte-b.sql ← S16 parte B: tabla de verificación de los 8 casos
-│   │   ├── S16-tienda.sql           ← taller S16: esquema de práctica "tienda" (script del profesor)
-│   │   ├── parte-a.sql              ← taller S16, Parte A: los 11 ejercicios resueltos por el grupo
-│   │   ├── S18-automotriz.sql       ← taller S18: planilla plana del taller "El Pistón" (script del profesor)
-│   │   ├── normalizacion.sql        ← taller S18, Parte B: la planilla llevada a 3FN, con verificación
-│   │   ├── S19-esquemas.sql         ← taller S19: cuatro esquemas mal diseñados (script del profesor)
-│   │   ├── casos.sql                ← taller S19, Parte A: diagnóstico, evidencia y migración de los 4 casos
-│   │   ├── parte-b-evidencia.sql    ← taller S19, Parte B: consultas de evidencia sobre el esquema biblioteca
-│   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
-│   └── data/                        ← datos internos de PostgreSQL (no se suben a GitHub)
-├── pgadmin/servers.json             ← conexión a PostgreSQL precargada en pgAdmin
-├── node/                            ← API REST (Hito 5)
-├── docs/
-│   ├── mapeo-y-criterios.md         ← mapeo CSV → esquema y criterios por tipo de error
-│   ├── evidencias.md                ← salidas de psql de todas las ejecuciones
-│   ├── README-entorno-docker.md     ← README original del entorno del profesor
-│   ├── S18-taller-normalizacion.md  ← taller S18: partes A1, A2 y C (formas normales)
-│   ├── S19-taller-esquemas.md       ← taller S19: los 4 casos explicados y la tabla de la Parte B
-│   └── pendientes.md                ← lo que falta (S15, S16 y los siguientes hitos)
-└── assets/                          ← capturas de las ejecuciones
+│   ├── init/                          ← se ejecuta SOLO, una vez, cuando la base está vacía
+│   │   ├── 01_esquema.sql             ← esquema "biblioteca" (biblioteca-v2 del taller S11)
+│   │   └── 02_carga.sql               ← esquema "carga": bitácora de rechazos y tablas de paso
+│   ├── scripts/                       ← se ejecutan a mano (dentro del contenedor: /scripts)
+│   │   ├── datos/                     ← 4 CSV semilla del curso + CSV propio del grupo
+│   │   ├── hito2/                     ← HITO 2 (S14 a S16)
+│   │   │   ├── carga-libros.sql       ← S14: carga de libros desde CSV, con bitácora
+│   │   │   ├── carga-lectores.sql     ← S14: carga de lectores desde CSV, con bitácora
+│   │   │   ├── pruebas-restricciones.sql ← S11: las restricciones rechazan los INSERT inválidos
+│   │   │   ├── datos-prueba.sql       ← S16 parte B: bibliotecaria y 30 préstamos que cubren los 8 casos
+│   │   │   ├── reportes.sql           ← S16 parte B: los 4 reportes (guardados como vistas)
+│   │   │   ├── verificacion-parte-b.sql ← S16 parte B: tabla de verificación de los 8 casos
+│   │   │   └── taller-S16/
+│   │   │       ├── S16-tienda.sql     ← esquema de práctica "tienda" (script del profesor)
+│   │   │       └── parte-a.sql        ← Parte A: los 11 ejercicios resueltos por el grupo
+│   │   └── hito3/                     ← HITO 3 (S17 a S20)
+│   │       ├── parte-b-evidencia.sql  ← S19 parte B: evidencia sobre el esquema biblioteca
+│   │       ├── taller-S18/
+│   │       │   ├── S18-automotriz.sql ← planilla plana del taller "El Pistón" (script del profesor)
+│   │       │   └── normalizacion.sql  ← Parte B: la planilla llevada a 3FN, con verificación
+│   │       └── taller-S19/
+│   │           ├── S19-esquemas.sql   ← cuatro esquemas mal diseñados (script del profesor)
+│   │           └── casos.sql          ← Parte A: diagnóstico, evidencia y migración de los 4 casos
+│   └── data/                          ← datos internos de PostgreSQL (no se suben a GitHub)
+├── pgadmin/servers.json               ← conexión a PostgreSQL precargada en pgAdmin
+├── node/                              ← API REST (Hito 5)
+└── docs/
+    ├── hito2/                         ← HITO 2
+    │   ├── mapeo-y-criterios.md       ← mapeo CSV → esquema y criterios por tipo de error
+    │   ├── evidencias.md              ← salidas de psql de todas las ejecuciones
+    │   └── capturas/                  ← capturas de pantalla de las ejecuciones
+    ├── hito3/                         ← HITO 3
+    │   ├── S18-taller-normalizacion.md ← taller S18: partes A1, A2, B y C (formas normales)
+    │   ├── S19-taller-esquemas.md     ← taller S19: los 4 casos y la tabla del esquema (Parte B)
+    │   └── S19-salida-psql.txt        ← taller S19: salida de psql del Docker del grupo
+    ├── pendientes.md                  ← lo que falta (siguientes hitos)
+    └── README-entorno-docker.md       ← README original del entorno del profesor
 ```
 
 ## 2. Cómo levantar el proyecto desde cero
@@ -79,30 +108,38 @@ docker compose logs postgres | Select-String "running|COMMIT|ERROR|init process 
 ```
 En el log deben aparecer `01_esquema.sql` y `02_carga.sql`, cada uno seguido de `COMMIT`.
 
-**2. Cargar los datos, en este orden** (primero los archivos limpios, después los que tienen errores):
+**2. Hito 2: cargar los datos, en este orden** (primero los archivos limpios, después los que tienen errores):
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/carga-libros.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla_con_errores.csv -f /scripts/carga-libros.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/carga-lectores.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla_con_errores.csv -f /scripts/carga-lectores.sql
-docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propios.csv -f /scripts/carga-libros.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/carga-libros.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_semilla_con_errores.csv -f /scripts/hito2/carga-libros.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/carga-lectores.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla_con_errores.csv -f /scripts/hito2/carga-lectores.sql
+docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/libros_propios.csv -f /scripts/hito2/carga-libros.sql
 ```
 
-**3. Crear los préstamos de prueba, correr los 4 reportes y verificarlos.** Deben ejecutarse **el mismo día y seguidos**, porque las fechas de los préstamos son relativas a la fecha en que se crean. El contenedor usa la hora UTC: a las 7 p. m. de Colombia ya es el día siguiente para PostgreSQL.
+**3. Hito 2: crear los préstamos de prueba, correr los 4 reportes y verificarlos.** Deben ejecutarse **el mismo día y seguidos**, porque las fechas de los préstamos son relativas a la fecha en que se crean. El contenedor usa la hora UTC: a las 7 p. m. de Colombia ya es el día siguiente para PostgreSQL.
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/reportes.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/datos-prueba.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/reportes.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/verificacion-parte-b.sql
 ```
 La verificación debe mostrar `sí` en las 9 filas.
 
-**4. Taller S16, Parte A** (esquema de práctica `tienda`, independiente de `biblioteca`):
+**4. Hito 2: taller S16, Parte A** (esquema de práctica `tienda`, independiente de `biblioteca`):
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/parte-a.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/taller-S16/S16-tienda.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/taller-S16/parte-a.sql
 ```
 
-**5. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
+**5. Hito 3: talleres S18 y S19, y examen del esquema del proyecto.** Los talleres usan sus propios esquemas (`automotriz`, `gimnasio`, `farmacia`, `cursos_libres` y `envios`) y no tocan `biblioteca`. El examen solo lee `biblioteca`; correrlo el mismo día que `datos-prueba.sql`.
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/S18-automotriz.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/normalizacion.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S19/casos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-evidencia.sql
+```
+
+**6. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
 
 **Reiniciar la base desde cero.** Hace falta cada vez que se cambia `01_esquema.sql` o `02_carga.sql`, porque `init/` solo corre con la base vacía. **Borra todos los datos.**
 ```powershell
@@ -117,16 +154,21 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | Fecha | Qué se hizo |
 |---|---|
 | 31/10/2026 | Se reconstruyó el esquema `biblioteca-v2` (taller S11) con las reglas de traducción E-R → relacional y se dejó como `postgres/init/01_esquema.sql`. Se instaló el entorno Docker del curso en Windows. Se verificó que las 9 tablas se crean solas y que el esquema rechaza los `INSERT` inválidos (`pruebas-restricciones.sql`). |
-| 02/11/2026 | Se documentaron el mapeo CSV → esquema y los criterios por tipo de error (`docs/mapeo-y-criterios.md`): 6 principios, los 14 errores del curso y 18 casos propios. Se detectó una discrepancia en los datos del curso (fila `…034`). |
+| 02/11/2026 | Se documentaron el mapeo CSV → esquema y los criterios por tipo de error (`docs/hito2/mapeo-y-criterios.md`): 6 principios, los 14 errores del curso y 18 casos propios. Se detectó una discrepancia en los datos del curso (fila `…034`). |
 | 03/11/2026 | Se creó el esquema `carga` (`02_carga.sql`) y el script `carga-libros.sql`. Pruebas: limpio (32 cargadas), con errores (8 rechazadas) y limpio otra vez (0 cargadas): **repetir la carga no duplica**. |
 | 04/11/2026 | Se creó `carga-lectores.sql`: cada lector se reparte en `usuario` + `lector`, con contraseña inicial cifrada con bcrypt. Pruebas: 20 cargadas, 6 rechazadas y 0 al repetir. Con esto, **los 14 errores del curso quedan atrapados**. |
 | 08/11/2026 | Taller de consultas de S16 (en curso): se agregó el script del profesor `S16-tienda.sql` (esquema de práctica `tienda`, separado de `biblioteca`) y `parte-a.sql`, con los 11 ejercicios de la Parte A resueltos. Cada ejercicio anota cuántas filas debe devolver, y las 11 coinciden. |
 | 09/11/2026 | Prueba completa desde una base vacía (`init/` crea los dos esquemas solo), carga del CSV propio (5 cargadas, 4 rechazadas), prueba de la última línea de defensa y publicación del repositorio en GitHub. |
-| 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/evidencias.md`. |
+| 10/11/2026 | S15/S16: se creó `datos-prestamos.sql` (una bibliotecaria y 30 préstamos, cada uno pensado para un caso de los reportes) y `reportes.sql` con los 4 reportes. Antes de escribir cada consulta se calculó a mano el resultado esperado, y los 4 reportes coincidieron. Las salidas de todas las ejecuciones quedaron en `docs/hito2/evidencias.md`. |
 | 10/11/2026 | **Cierre del taller S16 (Hito 2).** Se comparó el repositorio con la guía de S16, punto por punto. Cambios: `datos-prestamos.sql` pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía), con el resultado esperado de cada reporte y de los 8 casos escrito en el encabezado; cada reporte de `reportes.sql` lleva su resultado esperado y queda guardado como vista; nuevo `verificacion-parte-b.sql`, que arma la tabla de verificación desde esas vistas. Al revisar los casos se encontró que el caso 6 (préstamo que vence hoy) no se notaba en el reporte 3, porque Juan David ya era moroso por otros préstamos. Ese préstamo pasó a Isabella, que no tiene otro abierto, y los 4 reportes siguieron dando lo mismo. Prueba de control: con `<=` en vez de `<`, la verificación marca el caso 6 como `NO`. En `parte-a.sql` se agregó la respuesta a la pregunta del ejercicio 5. |
-| 10/11/2026 | **Corrida final de S16 en el Docker del grupo**, en el orden de la guía: `datos-prueba.sql` (`30 \| 20 \| 10 \| 5`), `reportes.sql` (21, 2, 4 y 5 filas, con las 4 vistas), `verificacion-parte-b.sql` (**9 de 9 coinciden**) y la Parte A (**11 de 11**). Las salidas reales quedaron en `docs/evidencias.md` (secciones 9 a 12) y las capturas, en `assets/paso8-*.png`. |
-| 11/11/2026 | **Taller S18 (formas normales).** Se agregó el script del profesor `S18-automotriz.sql` y se resolvió el taller completo: A1 (las 6 relaciones), A2 (1FN → 2FN → 3FN, con el esquema final en FNBC), la Parte B en `normalizacion.sql` y la Parte C (3FN frente a FNBC), en `docs/S18-taller-normalizacion.md`. La Parte B encontró una contradicción en la planilla (dos teléfonos para Jorge Mejía), la corrigió y reconstruyó la planilla exacta con `EXCEPT` (0 filas en los dos sentidos). Todo se probó en PostgreSQL 16. |
+| 10/11/2026 | **Corrida final de S16 en el Docker del grupo**, en el orden de la guía: `datos-prueba.sql` (`30 \| 20 \| 10 \| 5`), `reportes.sql` (21, 2, 4 y 5 filas, con las 4 vistas), `verificacion-parte-b.sql` (**9 de 9 coinciden**) y la Parte A (**11 de 11**). Las salidas reales quedaron en `docs/hito2/evidencias.md` (secciones 9 a 12) y las capturas, en `assets/paso8-*.png`. |
+| 11/11/2026 | **Taller S18 (formas normales).** Se agregó el script del profesor `S18-automotriz.sql` y se resolvió el taller completo: A1 (las 6 relaciones), A2 (1FN → 2FN → 3FN, con el esquema final en FNBC), la Parte B en `normalizacion.sql` y la Parte C (3FN frente a FNBC), en `docs/hito3/S18-taller-normalizacion.md`. La Parte B encontró una contradicción en la planilla (dos teléfonos para Jorge Mejía), la corrigió y reconstruyó la planilla exacta con `EXCEPT` (0 filas en los dos sentidos). Todo se probó en PostgreSQL 16. |
 | 17/11/2026 | **Taller S19 (esquemas mal diseñados).** Se agregó el script del profesor `S19-esquemas.sql` y se resolvieron los cuatro casos en `casos.sql`, cada uno con diagnóstico, evidencia, esquema corregido, migración en `BEGIN … COMMIT` (con conteos esperados y `EXCEPT`) y la queja resuelta: gimnasio (lista en una celda; Yoga 3 y Spinning 2), farmacia (grupo repetido; el cuarto medicamento), cursos libres (clave natural sin `UNIQUE`; Fotografía digital 380 000) y envíos (dato derivado; G07 24 000, con la tarifa aplicada como dato histórico). Parte B: el esquema `biblioteca` está en FNBC; se proponen dos reglas de integridad para S20 (`perfil` frente a `lector`, y nombres sin distinguir mayúsculas), con evidencia en `parte-b-evidencia.sql`. |
+| 17/11/2026 | **Organización del repositorio por hitos.** Los scripts se separaron en `postgres/scripts/hito2/` y `postgres/scripts/hito3/` (con una subcarpeta por taller), y los documentos en `docs/hito2/` (con las capturas) y `docs/hito3/`. Se quitó `entregas/s16/consultas.sql`, que era una copia idéntica de `parte-a.sql`. Se probó que todos los scripts corren con las rutas nuevas. |
+
+---
+
+> **HITO 2** (S14 a S16): esquema, carga desde CSV y los 4 reportes. Secciones 4 a 9. Scripts en `postgres/scripts/hito2/`; documentos en `docs/hito2/`.
 
 ## 4. El esquema `biblioteca`
 
@@ -152,7 +194,7 @@ Archivo: [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql). Tiene 9
 - **Correo en minúsculas:** `CHECK (correo = lower(correo))`, para que el `UNIQUE` no deje pasar `Ana@X.co` y `ana@x.co` como si fueran distintos.
 - **Un ejemplar no puede estar prestado dos veces a la vez:** se garantiza con un índice único **parcial** sobre los préstamos abiertos (`WHERE fecha_devolucion IS NULL`).
 
-**Pruebas de restricciones** ([`pruebas-restricciones.sql`](postgres/scripts/pruebas-restricciones.sql)). Cada `INSERT` inválido es rechazado por la regla esperada, y el script termina en `ROLLBACK`, así que no deja datos:
+**Pruebas de restricciones** ([`pruebas-restricciones.sql`](postgres/scripts/hito2/pruebas-restricciones.sql)). Cada `INSERT` inválido es rechazado por la regla esperada, y el script termina en `ROLLBACK`, así que no deja datos:
 
 | Prueba | Regla de negocio | Restricción que la rechaza |
 |---|---|---|
@@ -192,7 +234,7 @@ Las seis etapas de cada script, todas dentro de una transacción (`BEGIN … COM
 5. **Cargar** las filas válidas en las tablas finales, en el orden que exigen las FK. Un CSV de libros se reparte en **5 tablas**; uno de lectores, en **2** (con contraseña inicial bcrypt).
 6. **Registrar** las rechazadas en `carga.rechazo_carga`, con archivo, línea, contenido original y motivo.
 
-**Criterios:** [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md). Resumen: la carga masiva **solo da de alta** (nunca actualiza), solo corrige lo mecánico y rechaza todo lo demás con un motivo legible.
+**Criterios:** [`docs/hito2/mapeo-y-criterios.md`](docs/hito2/mapeo-y-criterios.md). Resumen: la carga masiva **solo da de alta** (nunca actualiza), solo corrige lo mecánico y rechaza todo lo demás con un motivo legible.
 
 **Resultados, desde una base vacía y en el orden de la sección 2:**
 
@@ -267,11 +309,11 @@ Queda igual (27 antes y 27 después). Los 7 rechazos legítimos de esa corrida *
 
 ## 8. Los 4 reportes
 
-Archivo: [`postgres/scripts/reportes.sql`](postgres/scripts/reportes.sql). Son las consultas del Hito 2, adaptadas del `S15-reportes-demo.sql` del profesor a nuestro esquema. Cada reporte queda guardado como **vista** (`biblioteca.reporte_top_libros`, `reporte_mas_lectores`, `reporte_morosos` y `reporte_prestamos_mora`), como sugiere la guía de S16 para la API de M7.
+Archivo: [`postgres/scripts/hito2/reportes.sql`](postgres/scripts/hito2/reportes.sql). Son las consultas del Hito 2, adaptadas del `S15-reportes-demo.sql` del profesor a nuestro esquema. Cada reporte queda guardado como **vista** (`biblioteca.reporte_top_libros`, `reporte_mas_lectores`, `reporte_morosos` y `reporte_prestamos_mora`), como sugiere la guía de S16 para la API de M7.
 
 ### 8.1 Los datos de prueba
 
-Sin préstamos, los reportes salen vacíos. [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) (hasta S15 se llamaba `datos-prestamos.sql`) crea:
+Sin préstamos, los reportes salen vacíos. [`datos-prueba.sql`](postgres/scripts/hito2/datos-prueba.sql) (hasta S15 se llamaba `datos-prestamos.sql`) crea:
 - Una **bibliotecaria** (Andrea Castillo Ruiz), porque todo préstamo exige un `id_bibliotecario`. Su contraseña se guarda con bcrypt.
 - **30 préstamos**: 20 devueltos, 10 abiertos y 5 en mora. Las fechas son relativas a `CURRENT_DATE`, con un plazo de 14 días.
 
@@ -315,21 +357,21 @@ El taller tiene dos partes. La **parte A** son 11 ejercicios sobre un esquema de
 
 | # | La guía pide | Dónde quedó |
 |---|---|---|
-| 1 | `parte-a.sql`: las 11 consultas, cada una con su número y, en la 9, la explicación | [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) |
-| 2 | `datos-prueba.sql` y `reportes.sql`, en `postgres/scripts/` | [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) y [`reportes.sql`](postgres/scripts/reportes.sql) |
-| 3 | Tabla de verificación de la parte B: caso, esperado, obtenido y qué se corrigió | [Sección 8.4.6](#846-tabla-de-verificación-de-la-parte-b), generada por [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) |
-| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/evidencias.md`](docs/evidencias.md), secciones 9 a 11 (copiadas de la terminal del grupo), y las capturas `paso8-*.png` de la [sección 9](#9-evidencias) |
+| 1 | `parte-a.sql`: las 11 consultas, cada una con su número y, en la 9, la explicación | [`postgres/scripts/hito2/taller-S16/parte-a.sql`](postgres/scripts/hito2/taller-S16/parte-a.sql) |
+| 2 | `datos-prueba.sql` y `reportes.sql`, en `postgres/scripts/` | [`datos-prueba.sql`](postgres/scripts/hito2/datos-prueba.sql) y [`reportes.sql`](postgres/scripts/hito2/reportes.sql) |
+| 3 | Tabla de verificación de la parte B: caso, esperado, obtenido y qué se corrigió | [Sección 8.4.6](#846-tabla-de-verificación-de-la-parte-b), generada por [`verificacion-parte-b.sql`](postgres/scripts/hito2/verificacion-parte-b.sql) |
+| 4 | Salida de `psql` de los 4 reportes con los datos de prueba | [`docs/hito2/evidencias.md`](docs/hito2/evidencias.md), secciones 9 a 11 (copiadas de la terminal del grupo), y las capturas `paso8-*.png` de la [sección 9](#9-evidencias) |
 
 #### 8.4.2 Parte A: ejercicios sobre `tienda`
 
 | Archivo | Qué es |
 |---|---|
-| [`postgres/scripts/S16-tienda.sql`](postgres/scripts/S16-tienda.sql) | Script del profesor: crea el esquema `tienda` con sus datos. Es re-ejecutable. |
-| [`postgres/scripts/parte-a.sql`](postgres/scripts/parte-a.sql) | Los 11 ejercicios resueltos por el grupo. Cada uno explica su técnica y cuántas filas debe devolver. |
+| [`postgres/scripts/hito2/taller-S16/S16-tienda.sql`](postgres/scripts/hito2/taller-S16/S16-tienda.sql) | Script del profesor: crea el esquema `tienda` con sus datos. Es re-ejecutable. |
+| [`postgres/scripts/hito2/taller-S16/parte-a.sql`](postgres/scripts/hito2/taller-S16/parte-a.sql) | Los 11 ejercicios resueltos por el grupo. Cada uno explica su técnica y cuántas filas debe devolver. |
 
 Los ejercicios practican: joins de varias tablas, self-join con `LEFT JOIN` (quién refirió a quién), anti-join (productos nunca vendidos), contar ceros con `count(columna)`, `GROUP BY` con `HAVING`, subconsulta correlacionada, `EXISTS`, la trampa de `NOT IN` con `NULL` (y su corrección con `NOT EXISTS`), el máximo con empates y la división con `NOT EXISTS` doble.
 
-**Resultado:** los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Evidencia: [`docs/evidencias.md`, sección 12](docs/evidencias.md#12-taller-s16-parte-a) y la captura [`assets/paso8-parte-a.png`](assets/paso8-parte-a.png). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql` (comandos en la sección 2, paso 4).
+**Resultado:** los 11 ejercicios devuelven exactamente las filas esperadas que anota cada uno (2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2). Evidencia: [`docs/hito2/evidencias.md`, sección 12](docs/hito2/evidencias.md#12-taller-s16-parte-a) y la captura [`docs/hito2/capturas/paso8-parte-a.png`](docs/hito2/capturas/paso8-parte-a.png). Si se reinicia la base desde cero, el esquema `tienda` se borra: basta con volver a correr `S16-tienda.sql` (comandos en la sección 2, paso 4).
 
 #### 8.4.3 Parte A: las preguntas de la sesión
 
@@ -353,13 +395,13 @@ Las 4 preguntas de la sección 3 de la guía, respondidas antes de escribir los 
 
 | Archivo | Qué hace |
 |---|---|
-| [`datos-prueba.sql`](postgres/scripts/datos-prueba.sql) | Una bibliotecaria y 30 préstamos con fechas relativas a `CURRENT_DATE`. El encabezado tiene el **resultado esperado** de cada reporte y de cada caso, escrito antes de correr nada. |
-| [`reportes.sql`](postgres/scripts/reportes.sql) | Los 4 reportes. Encima de cada uno: qué devuelve, sus decisiones y el resultado esperado. Cada uno queda guardado como vista. |
-| [`verificacion-parte-b.sql`](postgres/scripts/verificacion-parte-b.sql) | Lee las 4 vistas y compara, caso por caso, lo esperado con lo obtenido. No repite la lógica de los reportes: prueba exactamente esas consultas. |
+| [`datos-prueba.sql`](postgres/scripts/hito2/datos-prueba.sql) | Una bibliotecaria y 30 préstamos con fechas relativas a `CURRENT_DATE`. El encabezado tiene el **resultado esperado** de cada reporte y de cada caso, escrito antes de correr nada. |
+| [`reportes.sql`](postgres/scripts/hito2/reportes.sql) | Los 4 reportes. Encima de cada uno: qué devuelve, sus decisiones y el resultado esperado. Cada uno queda guardado como vista. |
+| [`verificacion-parte-b.sql`](postgres/scripts/hito2/verificacion-parte-b.sql) | Lee las 4 vistas y compara, caso por caso, lo esperado con lo obtenido. No repite la lógica de los reportes: prueba exactamente esas consultas. |
 
 #### 8.4.6 Tabla de verificación de la parte B
 
-Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió antes de correr los reportes; "obtenido" es la salida de `verificacion-parte-b.sql` ([evidencia](docs/evidencias.md#11-verificación-de-la-parte-b)).
+Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió antes de correr los reportes; "obtenido" es la salida de `verificacion-parte-b.sql` ([evidencia](docs/hito2/evidencias.md#11-verificación-de-la-parte-b)).
 
 | # | Caso | Reporte | Dato de prueba | Esperado | Obtenido | ¿Coincidió? / qué se corrigió |
 |---|---|---|---|---|---|---|
@@ -379,86 +421,77 @@ Una fila por cada caso de la sección 4 de la guía. "Esperado" se escribió ant
 |---|---|---|---|
 | Esquema que corre limpio desde `postgres/init/` con la base vacía | `postgres/init/01_esquema.sql` (y `02_carga.sql`) | S14 | Hecho |
 | Carga de libros y lectores desde CSV, con el semilla y con un CSV propio | `postgres/scripts/carga-*.sql` y `postgres/scripts/datos/` | S14 | Hecho |
-| Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/mapeo-y-criterios.md`](docs/mapeo-y-criterios.md) | S14 | Hecho |
-| Las consultas de los 4 reportes, documentadas | `postgres/scripts/reportes.sql` y `datos-prueba.sql` | S16 | Hecho |
+| Validación de filas mal formadas y duplicados, con bitácora | Los scripts de carga, `carga.rechazo_carga` y [`docs/hito2/mapeo-y-criterios.md`](docs/hito2/mapeo-y-criterios.md) | S14 | Hecho |
+| Las consultas de los 4 reportes, documentadas | `postgres/scripts/hito2/reportes.sql` y `datos-prueba.sql` | S16 | Hecho |
 
 No quedó nada pendiente de S14.
 
 ## 9. Evidencias
 
-**Salidas en texto:** [`docs/evidencias.md`](docs/evidencias.md) tiene la salida de `psql`, copiada tal cual de la terminal, de cada ejecución:
+**Salidas en texto:** [`docs/hito2/evidencias.md`](docs/hito2/evidencias.md) tiene la salida de `psql`, copiada tal cual de la terminal, de cada ejecución:
 
-| Entregable | Sección de `docs/evidencias.md` |
+| Entregable | Sección de `docs/hito2/evidencias.md` |
 |---|---|
-| Arranque desde cero (`init/` crea los dos esquemas) | [1](docs/evidencias.md#1-arranque-desde-cero-init) |
-| **Carga 1: libros limpio** | [2](docs/evidencias.md#2-carga-1-libros-limpio) |
-| **Carga 2: libros con errores** | [3](docs/evidencias.md#3-carga-2-libros-con-errores) |
-| Carga 3: lectores limpio | [4](docs/evidencias.md#4-carga-3-lectores-limpio) |
-| **Carga 4: lectores con errores** | [5](docs/evidencias.md#5-carga-4-lectores-con-errores) |
-| Totales: los 14 rechazos | [6](docs/evidencias.md#6-totales-después-de-las-4-cargas) |
-| **CSV propio** (y su repetición sin duplicar) | [7](docs/evidencias.md#7-csv-propio) |
-| **Prueba de la última línea de defensa** (y la regla restaurada) | [8](docs/evidencias.md#8-prueba-de-la-última-línea-de-defensa) |
-| Préstamos de prueba (corrida final de S16 y las dos corridas de S15) | [9](docs/evidencias.md#9-préstamos-de-prueba) |
-| **Los 4 reportes con los datos de prueba** (S16, parte B) | [10](docs/evidencias.md#10-los-4-reportes) |
-| **Tabla de verificación de la parte B** (S16) | [11](docs/evidencias.md#11-verificación-de-la-parte-b) |
-| **Taller S16, Parte A** (los 11 ejercicios) | [12](docs/evidencias.md#12-taller-s16-parte-a) |
+| Arranque desde cero (`init/` crea los dos esquemas) | [1](docs/hito2/evidencias.md#1-arranque-desde-cero-init) |
+| **Carga 1: libros limpio** | [2](docs/hito2/evidencias.md#2-carga-1-libros-limpio) |
+| **Carga 2: libros con errores** | [3](docs/hito2/evidencias.md#3-carga-2-libros-con-errores) |
+| Carga 3: lectores limpio | [4](docs/hito2/evidencias.md#4-carga-3-lectores-limpio) |
+| **Carga 4: lectores con errores** | [5](docs/hito2/evidencias.md#5-carga-4-lectores-con-errores) |
+| Totales: los 14 rechazos | [6](docs/hito2/evidencias.md#6-totales-después-de-las-4-cargas) |
+| **CSV propio** (y su repetición sin duplicar) | [7](docs/hito2/evidencias.md#7-csv-propio) |
+| **Prueba de la última línea de defensa** (y la regla restaurada) | [8](docs/hito2/evidencias.md#8-prueba-de-la-última-línea-de-defensa) |
+| Préstamos de prueba (corrida final de S16 y las dos corridas de S15) | [9](docs/hito2/evidencias.md#9-préstamos-de-prueba) |
+| **Los 4 reportes con los datos de prueba** (S16, parte B) | [10](docs/hito2/evidencias.md#10-los-4-reportes) |
+| **Tabla de verificación de la parte B** (S16) | [11](docs/hito2/evidencias.md#11-verificación-de-la-parte-b) |
+| **Taller S16, Parte A** (los 11 ejercicios) | [12](docs/hito2/evidencias.md#12-taller-s16-parte-a) |
 
-**Capturas de pantalla** (en [`assets/`](assets/)). Para las cargas 3 y 4, el CSV propio y la prueba de la última línea de defensa, la evidencia es la salida en texto de la tabla anterior.
+**Capturas de pantalla** (en [`assets/`](docs/hito2/capturas/)). Para las cargas 3 y 4, el CSV propio y la prueba de la última línea de defensa, la evidencia es la salida en texto de la tabla anterior.
 
 Pruebas de restricciones en pgAdmin (las 3 pruebas de S11 y la extra):
-![Pruebas de restricciones en pgAdmin](assets/paso1-pruebas-pgadmin.png)
+![Pruebas de restricciones en pgAdmin](docs/hito2/capturas/paso1-pruebas-pgadmin.png)
 
 Carga 1, libros limpio (32 cargadas):
-![Carga 1: libros limpio](assets/carga1-libros-limpio.png)
+![Carga 1: libros limpio](docs/hito2/capturas/carga1-libros-limpio.png)
 
 Carga 2, libros con errores (los 8 errores, cada uno con su motivo):
-![Carga 2: libros con errores](assets/carga2-libros-errores.png)
+![Carga 2: libros con errores](docs/hito2/capturas/carga2-libros-errores.png)
 
 Carga 1 repetida: las 32 filas salen rechazadas por `isbn ya existe en el catálogo` y los totales no cambian. **Repetir la carga no duplica.**
-![Carga 1 repetida](assets/carga1-libros-limpio-repetida.png)
+![Carga 1 repetida](docs/hito2/capturas/carga1-libros-limpio-repetida.png)
 
 **Taller S16 (cierre del Hito 2): corrida final en el Docker del grupo**, en el orden de la guía.
 
 Préstamos de prueba con `datos-prueba.sql` (`30 | 20 | 10 | 5`):
-![Préstamos de prueba (S16)](assets/paso8-datos-prueba.png)
+![Préstamos de prueba (S16)](docs/hito2/capturas/paso8-datos-prueba.png)
 
 Reporte 1: los 20 libros más prestados (21 filas, por el empate en el puesto 20):
-![Reporte 1](assets/paso8-reporte-1.png)
+![Reporte 1](docs/hito2/capturas/paso8-reporte-1.png)
 
 Reportes 2, 3 y 4 (cada `CREATE VIEW` es la vista de un reporte):
-![Reportes 2, 3 y 4](assets/paso8-reportes-2-3-4.png)
+![Reportes 2, 3 y 4](docs/hito2/capturas/paso8-reportes-2-3-4.png)
 
 **Tabla de verificación de la parte B: los 8 casos, 9 de 9 coinciden:**
-![Verificación de la parte B](assets/paso8-verificacion.png)
+![Verificación de la parte B](docs/hito2/capturas/paso8-verificacion.png)
 
 Parte A: los 11 ejercicios sobre el esquema `tienda`, cada uno con las filas esperadas:
-![Parte A](assets/paso8-parte-a.png)
+![Parte A](docs/hito2/capturas/paso8-parte-a.png)
 
-**Capturas anteriores (S15).** Mismos resultados, con el script cuando se llamaba `datos-prestamos.sql` y los reportes antes de guardarse como vistas: [préstamos de prueba, dos corridas](assets/paso6-datos-prestamos.png) (muestra que el script se puede repetir), [reportes 1 y 2](assets/paso7-reportes-1-2.png) y [reportes 3 y 4](assets/paso7-reportes-3-4.png).
+**Capturas anteriores (S15).** Mismos resultados, con el script cuando se llamaba `datos-prestamos.sql` y los reportes antes de guardarse como vistas: [préstamos de prueba, dos corridas](docs/hito2/capturas/paso6-datos-prestamos.png) (muestra que el script se puede repetir), [reportes 1 y 2](docs/hito2/capturas/paso7-reportes-1-2.png) y [reportes 3 y 4](docs/hito2/capturas/paso7-reportes-3-4.png).
 
-## 10. Lecciones aprendidas
+---
 
-- **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
-- **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
-- **Docker Desktop debe estar abierto.** Si no, aparece el error `dockerDesktopLinuxEngine`.
-- **`init/` solo corre con la base vacía.** Primero se copia el esquema a `init/` y **después** se levanta PostgreSQL. Para repetir el arranque, se borra `postgres/data/pgdata`.
-- **Codificación:** PowerShell 5.1 muestra mal las tildes de un archivo UTF-8. Se ven bien con `Get-Content -Encoding UTF8`.
-- **Los CSV no se editan con Excel**, porque los guarda con `;`, ni con comandos de PowerShell, porque mezclar finales de línea LF y CRLF hace fallar el `COPY` completo. Se usa VS Code o el Bloc de notas.
-- **Datos de prueba con fechas relativas:** `datos-prueba.sql` calcula las fechas a partir del día en que se corre. Para que los días de mora de los reportes sean los esperados, se corre **el mismo día** que `reportes.sql`. Ojo: el contenedor usa la hora UTC, así que desde las 7 p. m. de Colombia PostgreSQL ya está en el día siguiente.
-- **Un caso de prueba solo prueba algo si puede fallar.** El préstamo que "vence hoy" no se notaba en el reporte 3 porque su lector ya era moroso por otros préstamos: con `<` o con `<=` el reporte salía igual. Se aisló en una lectora sin otros préstamos abiertos, y se comprobó cambiando `<` por `<=` a propósito: la verificación lo detectó.
-- **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
-- **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.
+> **HITO 3** (S17 a S20): normalización. Secciones 10 y 11. Scripts en `postgres/scripts/hito3/`; documentos en `docs/hito3/`.
 
-## 11. Taller S18: formas normales
+## 10. Taller S18: formas normales
 
-Taller sobre un esquema de práctica del profesor: la planilla de servicios del Taller Automotriz El Pistón. Vive en su propio esquema, `automotriz`, así que **no toca** `biblioteca`. El desarrollo completo, con cada paso justificado, está en [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md).
+Taller sobre un esquema de práctica del profesor: la planilla de servicios del Taller Automotriz El Pistón. Vive en su propio esquema, `automotriz`, así que **no toca** `biblioteca`. El desarrollo completo, con cada paso justificado, está en [`docs/hito3/S18-taller-normalizacion.md`](docs/hito3/S18-taller-normalizacion.md).
 
 | Parte | Dónde | Qué se hizo |
 |---|---|---|
-| A1. Diagnóstico | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-a1-diagnóstico) | Las 6 relaciones de la guía, con claves candidatas, forma normal más alta y lo que impide subir: 1 no está en 1FN (tampoco con `telefono1..3`), 2 en 1FN, 3 en 2FN, 4 y 5 en FNBC, 6 en 3FN |
-| A2. El Pistón hasta 3FN | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-a2-el-pistón-hasta-3fn) | 7 dependencias funcionales con su regla del negocio; `(num_orden, cod_servicio)` como única clave (por cierre); 2FN, 3FN y comprobación de FNBC; el dueño del día de la orden |
-| B. En PostgreSQL | [`postgres/scripts/normalizacion.sql`](postgres/scripts/normalizacion.sql) | Limpieza de una contradicción, 7 tablas con PK, FK y `NOT NULL`, carga con `SELECT DISTINCT`, la vista `reconstruida` verificada con `EXCEPT` y las 3 anomalías de S17 eliminadas. La salida de `psql` de (a), (c) y (d) está en el [documento del taller](docs/S18-taller-normalizacion.md#salida-de-psql-de-los-pasos-a-c-y-d) |
-| C. 3FN frente a FNBC | [`docs/S18-taller-normalizacion.md`](docs/S18-taller-normalizacion.md#parte-c-3fn-frente-a-fnbc) | `responsable` está en 3FN pero no en FNBC; la FNBC pierde una regla; se recomienda 3FN con una FK compuesta (probado en PostgreSQL) |
+| A1. Diagnóstico | [`docs/hito3/S18-taller-normalizacion.md`](docs/hito3/S18-taller-normalizacion.md#parte-a1-diagnóstico) | Las 6 relaciones de la guía, con claves candidatas, forma normal más alta y lo que impide subir: 1 no está en 1FN (tampoco con `telefono1..3`), 2 en 1FN, 3 en 2FN, 4 y 5 en FNBC, 6 en 3FN |
+| A2. El Pistón hasta 3FN | [`docs/hito3/S18-taller-normalizacion.md`](docs/hito3/S18-taller-normalizacion.md#parte-a2-el-pistón-hasta-3fn) | 7 dependencias funcionales con su regla del negocio; `(num_orden, cod_servicio)` como única clave (por cierre); 2FN, 3FN y comprobación de FNBC; el dueño del día de la orden |
+| B. En PostgreSQL | [`postgres/scripts/hito3/taller-S18/normalizacion.sql`](postgres/scripts/hito3/taller-S18/normalizacion.sql) | Limpieza de una contradicción, 7 tablas con PK, FK y `NOT NULL`, carga con `SELECT DISTINCT`, la vista `reconstruida` verificada con `EXCEPT` y las 3 anomalías de S17 eliminadas. La salida de `psql` de (a), (c) y (d) está en el [documento del taller](docs/hito3/S18-taller-normalizacion.md#salida-de-psql-de-los-pasos-a-c-y-d) |
+| C. 3FN frente a FNBC | [`docs/hito3/S18-taller-normalizacion.md`](docs/hito3/S18-taller-normalizacion.md#parte-c-3fn-frente-a-fnbc) | `responsable` está en 3FN pero no en FNBC; la FNBC pierde una regla; se recomienda 3FN con una FK compuesta (probado en PostgreSQL) |
 
 **Esquema final (3FN y FNBC):**
 ```
@@ -471,14 +504,14 @@ orden_servicio (num_orden FK, cod_servicio FK, precio_cobrado, cod_mecanico FK) 
 
 **Cómo ejecutarlo:**
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/S18-automotriz.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/normalizacion.sql
 ```
 Resultado esperado: en (a), una sola contradicción (la cédula 16700002) y `UPDATE 1`; en (c), 3, 4, 4, 6, 5, 3 y 11 filas; en (d), 11 y 11 filas y **0 filas** en los dos `EXCEPT`; en (e), `UPDATE 1`, `INSERT 0 1` y `DELETE 2`, cada uno deshecho con `ROLLBACK`, y al final 11 líneas de orden y 6 órdenes.
 
-## 12. Taller S19: esquemas mal diseñados
+## 11. Taller S19: esquemas mal diseñados
 
-Una "clínica de esquemas": cuatro bases pequeñas del profesor (`gimnasio`, `farmacia`, `cursos_libres` y `envios`), cada una con un defecto de diseño y una queja del negocio. Viven en sus propios esquemas, así que **no tocan** `biblioteca`. La explicación de cada caso y la tabla de la Parte B están en [`docs/S19-taller-esquemas.md`](docs/S19-taller-esquemas.md).
+Una "clínica de esquemas": cuatro bases pequeñas del profesor (`gimnasio`, `farmacia`, `cursos_libres` y `envios`), cada una con un defecto de diseño y una queja del negocio. Viven en sus propios esquemas, así que **no tocan** `biblioteca`. La explicación de cada caso y la tabla de la Parte B están en [`docs/hito3/S19-taller-esquemas.md`](docs/hito3/S19-taller-esquemas.md).
 
 | Caso | Problema principal | Queja resuelta |
 |---|---|---|
@@ -491,7 +524,22 @@ Una "clínica de esquemas": cuatro bases pequeñas del profesor (`gimnasio`, `fa
 
 **Cómo ejecutarlo:**
 ```powershell
-docker compose exec postgres psql -U curso -d curso -f /scripts/casos.sql
-docker compose exec postgres psql -U curso -d curso -f /scripts/parte-b-evidencia.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S19/casos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-evidencia.sql
 ```
 `casos.sql` vuelve a crear los cuatro esquemas al empezar, así que se puede correr varias veces. Debe terminar con `== Fin de casos.sql ==`, con todos los `EXCEPT` en `(0 rows)` y tres `NOTICE: Rechazada, como debe ser`.
+
+---
+
+## 12. Lecciones aprendidas
+
+- **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
+- **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
+- **Docker Desktop debe estar abierto.** Si no, aparece el error `dockerDesktopLinuxEngine`.
+- **`init/` solo corre con la base vacía.** Primero se copia el esquema a `init/` y **después** se levanta PostgreSQL. Para repetir el arranque, se borra `postgres/data/pgdata`.
+- **Codificación:** PowerShell 5.1 muestra mal las tildes de un archivo UTF-8. Se ven bien con `Get-Content -Encoding UTF8`.
+- **Los CSV no se editan con Excel**, porque los guarda con `;`, ni con comandos de PowerShell, porque mezclar finales de línea LF y CRLF hace fallar el `COPY` completo. Se usa VS Code o el Bloc de notas.
+- **Datos de prueba con fechas relativas:** `datos-prueba.sql` calcula las fechas a partir del día en que se corre. Para que los días de mora de los reportes sean los esperados, se corre **el mismo día** que `reportes.sql`. Ojo: el contenedor usa la hora UTC, así que desde las 7 p. m. de Colombia PostgreSQL ya está en el día siguiente.
+- **Un caso de prueba solo prueba algo si puede fallar.** El préstamo que "vence hoy" no se notaba en el reporte 3 porque su lector ya era moroso por otros préstamos: con `<` o con `<=` el reporte salía igual. Se aisló en una lectora sin otros préstamos abiertos, y se comprobó cambiando `<` por `<=` a propósito: la verificación lo detectó.
+- **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
+- **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.

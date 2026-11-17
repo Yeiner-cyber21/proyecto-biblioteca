@@ -1,6 +1,8 @@
 # Evidencias de ejecución
 
-Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. La única salida que no viene de esa terminal es la prueba de control de la sección 11, y lo dice ahí. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`../assets/`](../assets/).
+Salidas **copiadas tal cual** de la terminal (PowerShell 5.1) del grupo, al ejecutar los scripts en el entorno Docker del curso. La única salida que no viene de esa terminal es la prueba de control de la sección 11, y lo dice ahí. La rúbrica de S14 acepta "la salida de `psql` (texto o captura)". Las capturas de pantalla que existen están en [`capturas/`](capturas/).
+
+> **Rutas.** Desde el 17/11/2026 el repositorio está organizado por hitos: los scripts del Hito 2 están en `postgres/scripts/hito2/` (dentro de Docker, `/scripts/hito2/…`). Las salidas de este documento se copiaron **tal cual** de la terminal, así que muestran las rutas que tenían los scripts el día en que se corrieron (por ejemplo, `/scripts/carga-libros.sql`). Los comandos actuales están en el [README, sección 2](../../README.md#2-cómo-levantar-el-proyecto-desde-cero).
 
 ## Contenido
 
@@ -410,7 +412,7 @@ COMMIT
 
 ## 9. Préstamos de prueba
 
-**Corrida final de S16** con `datos-prueba.sql`, el 10/11/2026 en la noche (hora de Colombia), en el orden de la guía: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`, seguidos. Captura: [`../assets/paso8-datos-prueba.png`](../assets/paso8-datos-prueba.png).
+**Corrida final de S16** con `datos-prueba.sql`, el 10/11/2026 en la noche (hora de Colombia), en el orden de la guía: `datos-prueba.sql`, `reportes.sql` y `verificacion-parte-b.sql`, seguidos. Captura: [`capturas/paso8-datos-prueba.png`](capturas/paso8-datos-prueba.png).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/datos-prueba.sql
@@ -468,7 +470,7 @@ COMMIT
 
 ## 10. Los 4 reportes
 
-Salida de `reportes.sql` justo después de la corrida final de `datos-prueba.sql`. Capturas: [`../assets/paso8-reporte-1.png`](../assets/paso8-reporte-1.png) y [`../assets/paso8-reportes-2-3-4.png`](../assets/paso8-reportes-2-3-4.png). Cada `CREATE VIEW` es la vista de un reporte. Los 4 coinciden con el resultado esperado escrito en el encabezado de `datos-prueba.sql`: **21, 2, 4 y 5 filas**.
+Salida de `reportes.sql` justo después de la corrida final de `datos-prueba.sql`. Capturas: [`capturas/paso8-reporte-1.png`](capturas/paso8-reporte-1.png) y [`capturas/paso8-reportes-2-3-4.png`](capturas/paso8-reportes-2-3-4.png). Cada `CREATE VIEW` es la vista de un reporte. Los 4 coinciden con el resultado esperado escrito en el encabezado de `datos-prueba.sql`: **21, 2, 4 y 5 filas**.
 
 El contenedor usa la hora UTC, que a esa hora ya iba en el 11/11. Por eso las fechas de vencimiento del reporte 4 van un día después que en las capturas de S15 (`paso7-*.png`); los **días de mora** son los mismos (31, 13, 7, 6 y 2), porque todo es relativo a `CURRENT_DATE`.
 
@@ -538,7 +540,7 @@ CREATE VIEW
 
 ## 11. Verificación de la parte B
 
-Salida de `verificacion-parte-b.sql`, justo después de los reportes. Las 9 filas coinciden con lo esperado. Captura: [`../assets/paso8-verificacion.png`](../assets/paso8-verificacion.png). Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../README.md#846-tabla-de-verificación-de-la-parte-b).
+Salida de `verificacion-parte-b.sql`, justo después de los reportes. Las 9 filas coinciden con lo esperado. Captura: [`capturas/paso8-verificacion.png`](capturas/paso8-verificacion.png). Es la "tabla de verificación" que pide la guía de S16; la versión comentada está en el [README, sección 8.4.6](../../README.md#846-tabla-de-verificación-de-la-parte-b).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/verificacion-parte-b.sql
@@ -571,7 +573,7 @@ Después se restauró `<` y las 9 filas volvieron a coincidir.
 
 ## 12. Taller S16, Parte A
 
-Primero `S16-tienda.sql` (crea el esquema `tienda`) y después `parte-a.sql`. Los 11 ejercicios devuelven las filas esperadas que anota cada uno: **2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2**. Captura: [`../assets/paso8-parte-a.png`](../assets/paso8-parte-a.png).
+Primero `S16-tienda.sql` (crea el esquema `tienda`) y después `parte-a.sql`. Los 11 ejercicios devuelven las filas esperadas que anota cada uno: **2, 8, 1, 8, 3, 2, 4, 2, 5, 2 y 2**. Captura: [`capturas/paso8-parte-a.png`](capturas/paso8-parte-a.png).
 
 ```text
 PS C:\Users\yeine\proyecto-biblioteca> docker compose exec postgres psql -U curso -d curso -f /scripts/S16-tienda.sql

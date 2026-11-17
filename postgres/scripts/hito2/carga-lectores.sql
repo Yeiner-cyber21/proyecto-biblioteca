@@ -1,11 +1,11 @@
 -- =====================================================================
 -- carga-lectores.sql  ·  Carga de lectores desde CSV al esquema "biblioteca"
 -- Patrón: archivo → tabla de paso → validación → tablas finales | bitácora
--- Reglas, orden y motivos: docs/mapeo-y-criterios.md (secciones 1.2 y 2)
+-- Reglas, orden y motivos: docs/hito2/mapeo-y-criterios.md (secciones 1.2 y 2)
 --
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/carga-lectores.sql
---   docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla_con_errores.csv -f /scripts/carga-lectores.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/carga-lectores.sql
+--   docker compose exec postgres psql -U curso -d curso -v archivo=/scripts/datos/lectores_semilla_con_errores.csv -f /scripts/hito2/carga-lectores.sql
 -- Sin "-v archivo=..." carga /scripts/datos/lectores_semilla.csv.
 --
 -- Mismas etapas que carga-libros.sql. Lo nuevo: cada lector se reparte en

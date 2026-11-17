@@ -3,12 +3,12 @@
 -- 750006C Bases de Datos · Universidad del Valle · Grupo 9
 --
 -- Una consulta de evidencia por tabla, para la tabla de la Parte B
--- (docs/S19-taller-esquemas.md). Solo LEE: no cambia nada del proyecto.
+-- (docs/hito3/S19-taller-esquemas.md). Solo LEE: no cambia nada del proyecto.
 -- En esta sesión no se migra el proyecto; los cambios propuestos son para S20.
 --
 -- Requisito: el esquema con los datos cargados (cargas de S14 y datos-prueba.sql).
 -- Uso (PowerShell, desde la carpeta del proyecto):
---   docker compose exec postgres psql -U curso -d curso -f /scripts/parte-b-evidencia.sql
+--   docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-evidencia.sql
 -- =====================================================================
 
 \set ON_ERROR_STOP on
