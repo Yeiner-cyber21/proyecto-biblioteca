@@ -1,0 +1,504 @@
+Pager usage is off.
+== Preparación: los cuatro esquemas, como al principio ==
+psql:/scripts/S19-esquemas.sql:21: NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table gimnasio.socio
+drop cascades to table gimnasio.plan
+drop cascades to table gimnasio.clase
+drop cascades to table gimnasio.socio_clase
+DROP SCHEMA
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 6
+psql:/scripts/S19-esquemas.sql:44: NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table farmacia.formula
+drop cascades to table farmacia.paciente
+drop cascades to table farmacia.medicamento
+drop cascades to table farmacia.formula_medicamento
+DROP SCHEMA
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 4
+psql:/scripts/S19-esquemas.sql:74: NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table cursos_libres.inscripcion
+drop cascades to table cursos_libres.participante
+drop cascades to table cursos_libres.sede
+drop cascades to table cursos_libres.curso
+DROP SCHEMA
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 8
+psql:/scripts/S19-esquemas.sql:105: NOTICE:  drop cascades to 4 other objects
+DETAIL:  drop cascades to table envios.envio
+drop cascades to table envios.zona
+drop cascades to table envios.ciudad
+drop cascades to view envios.envio_valor
+DROP SCHEMA
+CREATE SCHEMA
+CREATE TABLE
+INSERT 0 8
+           tabla           | filas 
+---------------------------+-------
+ gimnasio.socio            |     6
+ farmacia.formula          |     4
+ cursos_libres.inscripcion |     8
+ envios.envio              |     8
+(4 rows)
+
+SET
+
+######## CASO 1: gimnasio ########
+-- (b.1) La queja: la consulta con LIKE (esperado: yoga 2, spinning 3, ambos MAL)
+ socios_yoga_like | socios_spinning_like 
+------------------+----------------------
+                2 |                    3
+(1 row)
+
+-- (b.2) Por qué: los pedazos de la lista, entre corchetes para ver los espacios (esperado: 9 filas)
+ id_socio |        nombre        |       pedazo        
+----------+----------------------+---------------------
+        1 | Laura Cifuentes      | [Yoga]
+        1 | Laura Cifuentes      | [ Spinning]
+        2 | Pedro Arango         | [Spinning avanzado]
+        3 | María Fernanda Lasso | [Pilates]
+        3 | María Fernanda Lasso | [yoga]
+        4 | Andrés Mosquera      | [Spinning]
+        4 | Andrés Mosquera      | [ Funcional]
+        4 | Andrés Mosquera      | [ Yoga ]
+        6 | Tomás Ortega         | [Funcional]
+(9 rows)
+
+-- (b.3) Conteo correcto, limpiando cada pedazo (esperado: yoga 3, spinning 2)
+       clase       | socios 
+-------------------+--------
+ funcional         |      2
+ pilates           |      1
+ spinning          |      2
+ spinning avanzado |      1
+ yoga              |      3
+(5 rows)
+
+-- (b.4) plan -> valor_plan: ¿algún plan con dos valores? (esperado: 0 filas)
+ plan 
+------
+(0 rows)
+
+-- (b.5) Redundancia: cuántas veces está escrito el valor de cada plan (esperado: Mensual 3, Anual 2, Trimestral 1)
+    plan    | valor_plan | veces 
+------------+------------+-------
+ Mensual    |      90000 |     3
+ Anual      |     850000 |     2
+ Trimestral |     240000 |     1
+(3 rows)
+
+
+-- (d) Migración del caso 1
+BEGIN
+CREATE TABLE
+INSERT 0 3
+CREATE TABLE
+CREATE INDEX
+INSERT 0 5
+CREATE TABLE
+INSERT 0 9
+-- (e) Conteos: esperado plan 3, clase 5, socio_clase 9, socio 6
+ plan | clase | socio_clase | socio 
+------+-------+-------------+-------
+    3 |     5 |           9 |     6
+(1 row)
+
+-- (e) Pares (socio, clase) del texto original que NO quedaron en socio_clase (esperado: 0 filas)
+ id_socio | clase 
+----------+-------
+(0 rows)
+
+-- (e) Pares en socio_clase que NO estaban en el texto original (esperado: 0 filas)
+ id_socio | clase 
+----------+-------
+(0 rows)
+
+-- (e) Cada socio conserva su plan y su valor (esperado: 0 filas)
+ id_socio | plan | valor_plan 
+----------+------+------------
+(0 rows)
+
+ALTER TABLE
+ALTER TABLE
+COMMIT
+-- (e) La queja, resuelta en el esquema nuevo (esperado: Yoga 3 y Spinning 2; Spinning avanzado aparte, con 1)
+       clase       | socios 
+-------------------+--------
+ Funcional         |      2
+ Pilates           |      1
+ Spinning          |      2
+ Spinning avanzado |      1
+ Yoga              |      3
+(5 rows)
+
+-- (e) La clave natural protegida: registrar otra vez la clase "yoga" (esperado: NOTICE de rechazo)
+psql:/scripts/casos.sql:203: NOTICE:  Rechazada, como debe ser: duplicate key value violates unique constraint "ux_clase_nombre_sin_mayusculas"
+DO
+SET
+
+######## CASO 2: farmacia ########
+-- (b.1) La queja: buscar acetaminofén solo en medicamento1 vs en las 3 columnas (esperado: 1 y 3)
+ solo_medicamento1 | en_las_tres_columnas 
+-------------------+----------------------
+                 1 |                    3
+(1 row)
+
+-- (b.2) El grupo repetido, casi vacío: cuántas fórmulas usan cada columna (esperado: 4, 3 y 1 de 4)
+ con_medicamento1 | con_medicamento2 | con_medicamento3 | formulas 
+------------------+------------------+------------------+----------
+                4 |                3 |                1 |        4
+(1 row)
+
+-- (b.3) doc_paciente -> nombre_paciente: ¿algún documento con dos nombres? (esperado: 0 filas)
+ doc_paciente 
+--------------
+(0 rows)
+
+-- (b.4) Redundancia del paciente (esperado: Rosa Díaz, 2 veces)
+ doc_paciente | nombre_paciente | veces 
+--------------+-----------------+-------
+ 1110000111   | Rosa Díaz       |     2
+(1 row)
+
+-- (b.5) La dosis no depende solo del medicamento (esperado: Acetaminofén con 2 dosis distintas)
+     medicamento     | dosis_distintas |        dosis        
+---------------------+-----------------+---------------------
+ Acetaminofén 500 mg |               2 | cada 6 h / cada 8 h
+(1 row)
+
+
+-- (d) Migración del caso 2
+BEGIN
+CREATE TABLE
+INSERT 0 3
+CREATE TABLE
+INSERT 0 5
+CREATE TABLE
+INSERT 0 8
+-- (e) Conteos: esperado paciente 3, medicamento 5, formula_medicamento 8, formula 4
+ paciente | medicamento | formula_medicamento | formula 
+----------+-------------+---------------------+---------
+        3 |           5 |                   8 |       4
+(1 row)
+
+-- (e) Líneas de las columnas viejas que NO quedaron en formula_medicamento (esperado: 0 filas)
+ num_formula | medicamento | dosis 
+-------------+-------------+-------
+(0 rows)
+
+-- (e) Líneas en formula_medicamento que NO estaban en las columnas viejas (esperado: 0 filas)
+ num_formula | nombre | dosis 
+-------------+--------+-------
+(0 rows)
+
+-- (e) Cada fórmula conserva su paciente (esperado: 0 filas)
+ num_formula | doc_paciente | nombre_paciente 
+-------------+--------------+-----------------
+(0 rows)
+
+ALTER TABLE
+ALTER TABLE
+COMMIT
+-- (e) La queja, resuelta: fórmulas con acetaminofén, buscando en UN solo lugar (esperado: 3)
+ formulas_con_acetaminofen 
+---------------------------
+                         3
+(1 row)
+
+-- (e) La queja, resuelta: un cuarto medicamento en la fórmula 703 (esperado: 4 medicamentos; se deshace con ROLLBACK)
+BEGIN
+INSERT 0 1
+INSERT 0 1
+ num_formula |     medicamento     |   dosis   
+-------------+---------------------+-----------
+         703 | Acetaminofén 500 mg | cada 8 h
+         703 | Ibuprofeno 400 mg   | cada 12 h
+         703 | Omeprazol 20 mg     | cada 24 h
+         703 | Vitamina C 500 mg   | cada 24 h
+(4 rows)
+
+ROLLBACK
+-- (e) La regla protegida: repetir el ibuprofeno en la fórmula 703 (esperado: NOTICE de rechazo)
+psql:/scripts/casos.sql:424: NOTICE:  Rechazada, como debe ser: duplicate key value violates unique constraint "formula_medicamento_pkey"
+DO
+SET
+
+######## CASO 3: cursos_libres ########
+-- (b.1) La queja: lo recaudado por curso (esperado: Fotografía digital 580000; en caja hay 380000)
+ cod_curso |    nombre_curso    | inscripciones | recaudado 
+-----------+--------------------+---------------+-----------
+ C10       | Guitarra básica    |             3 |    450000
+ C20       | Fotografía digital |             3 |    580000
+ C30       | Cerámica           |             2 |    340000
+(3 rows)
+
+-- (b.2) La causa: filas repetidas en la clave natural (esperado: Juliana en C20, ids 3 y 7)
+ doc_participante | nombre_participante | cod_curso | veces | ids  | cobrado 
+------------------+---------------------+-----------+-------+------+---------
+ 1140000900       | Juliana Rey         | C20       |     2 | 3, 7 |  400000
+(1 row)
+
+-- (b.3) Las dependencias no están contradichas (esperado: 0 filas en cada una)
+ dependencia | valor 
+-------------+-------
+(0 rows)
+
+-- (b.4) Redundancia: cuántas veces está escrita cada dirección de sede (esperado: S1 5, S2 3)
+ cod_sede | direccion_sede | veces 
+----------+----------------+-------
+ S1       | Cra 5 # 10-20  |     5
+ S2       | Av 6N # 25-40  |     3
+(2 rows)
+
+
+-- (d) Migración del caso 3
+BEGIN
+SELECT 8
+-- (d) Borrar la inscripción duplicada (esperado: DELETE 1, la fila 7)
+DELETE 1
+CREATE TABLE
+INSERT 0 4
+CREATE TABLE
+INSERT 0 2
+CREATE TABLE
+INSERT 0 3
+-- (e) Conteos: esperado inscripcion 7, participante 4, sede 2, curso 3
+ inscripcion | participante | sede | curso 
+-------------+--------------+------+-------
+           7 |            4 |    2 |     3
+(1 row)
+
+-- (e) Filas distintas de la tabla original que NO se pueden reconstruir (esperado: 0 filas)
+ doc_participante | nombre_participante | correo | cod_curso | nombre_curso | cod_sede | direccion_sede | valor_pagado 
+------------------+---------------------+--------+-----------+--------------+----------+----------------+--------------
+(0 rows)
+
+-- (e) Filas reconstruidas que NO estaban en la tabla original (esperado: 0 filas)
+ doc_participante | nombre_participante | correo | cod_curso | nombre_curso | cod_sede | direccion_sede | valor_pagado 
+------------------+---------------------+--------+-----------+--------------+----------+----------------+--------------
+(0 rows)
+
+ALTER TABLE
+ALTER TABLE
+COMMIT
+-- (e) La queja, resuelta: lo recaudado por curso (esperado: Fotografía digital 380000)
+ cod_curso |    nombre_curso    | inscripciones | recaudado 
+-----------+--------------------+---------------+-----------
+ C10       | Guitarra básica    |             3 |    450000
+ C20       | Fotografía digital |             2 |    380000
+ C30       | Cerámica           |             2 |    340000
+(3 rows)
+
+-- (e) La clave natural protegida: inscribir otra vez a Juliana en C20 (esperado: NOTICE de rechazo)
+psql:/scripts/casos.sql:630: NOTICE:  Rechazada, como debe ser: duplicate key value violates unique constraint "inscripcion_participante_curso_key"
+DO
+SET
+
+######## CASO 4: envios ########
+-- (b.1) La queja: envíos cuyo valor no coincide con peso × tarifa (esperado: G07, 42000 contra 24000)
+ num_guia |   fecha    | ciudad_destino | peso_kg | tarifa_kg | valor | valor_calculado | cobrado_de_mas 
+----------+------------+----------------+---------+-----------+-------+-----------------+----------------
+ G07      | 2026-10-08 | Bogotá         |     4.0 |      6000 | 42000 |           24000 |          18000
+(1 row)
+
+-- (b.2) Los envíos a Bogotá (esperado: G03 bien, G07 mal)
+ num_guia | peso_kg | tarifa_kg | valor | valor_calculado 
+----------+---------+-----------+-------+-----------------
+ G03      |     1.0 |      6000 |  6000 |            6000
+ G07      |     4.0 |      6000 | 42000 |           24000
+(2 rows)
+
+-- (b.3) Las dependencias transitivas no están contradichas (esperado: 0 filas)
+ dependencia | valor 
+-------------+-------
+(0 rows)
+
+-- (b.4) Redundancia: cuántas veces está escrita la tarifa de cada zona (esperado: zona 1 3, zona 2 4, zona 3 1)
+ zona | tarifa_kg | veces 
+------+-----------+-------
+    1 |      4000 |     3
+    2 |      6000 |     4
+    3 |      9000 |     1
+(3 rows)
+
+
+-- (d) Migración del caso 4
+BEGIN
+SELECT 8
+CREATE TABLE
+INSERT 0 3
+CREATE TABLE
+INSERT 0 5
+-- (e) Conteos: esperado zona 3, ciudad 5, envio 8
+ zona | ciudad | envio 
+------+--------+-------
+    3 |      5 |     8
+(1 row)
+
+ALTER TABLE
+ALTER TABLE
+CREATE VIEW
+-- (e) Datos originales (sin valor) que la vista NO reconstruye (esperado: 0 filas)
+ num_guia | fecha | ciudad_destino | departamento | zona | tarifa_kg | peso_kg 
+----------+-------+----------------+--------------+------+-----------+---------
+(0 rows)
+
+-- (e) Datos de la vista que NO estaban en la tabla original (esperado: 0 filas)
+ num_guia | fecha | ciudad_destino | departamento | zona | tarifa_kg | peso_kg 
+----------+-------+----------------+--------------+------+-----------+---------
+(0 rows)
+
+-- (e) El valor: la única diferencia con lo guardado es G07, la corrección (esperado: 1 fila)
+ num_guia | valor_guardado | valor_calculado 
+----------+----------------+-----------------
+ G07      |          42000 |           24000
+(1 row)
+
+COMMIT
+-- (e) La queja, resuelta: los envíos a Bogotá con el valor calculado (esperado: G03 6000 y G07 24000)
+ num_guia |   fecha    | peso_kg | tarifa_kg | valor 
+----------+------------+---------+-----------+-------
+ G03      | 2026-10-02 |     1.0 |      6000 |  6000
+ G07      | 2026-10-08 |     4.0 |      6000 | 24000
+(2 rows)
+
+
+-- Pregunta propia: subir la tarifa de la zona 2 con el esquema de (c) (esperado: G03 pasa de 6000 a 6600; se deshace)
+BEGIN
+UPDATE 1
+ num_guia |   fecha    | ciudad_destino | peso_kg | tarifa_kg | valor 
+----------+------------+----------------+---------+-----------+-------
+ G03      | 2026-10-02 | Bogotá         |     1.0 |      6600 |  6600
+ G04      | 2026-10-02 | Medellín       |     3.0 |      6600 | 19800
+ G07      | 2026-10-08 | Bogotá         |     4.0 |      6600 | 26400
+ G08      | 2026-10-09 | Medellín       |     1.5 |      6600 |  9900
+(4 rows)
+
+ROLLBACK
+
+-- Ajuste por la pregunta propia: guardar la tarifa aplicada a cada envío (dato histórico)
+BEGIN
+ALTER TABLE
+UPDATE 8
+ALTER TABLE
+CREATE VIEW
+-- Los 8 envíos tienen su tarifa aplicada (esperado: 8)
+ envios_con_tarifa_aplicada 
+----------------------------
+                          8
+(1 row)
+
+COMMIT
+-- Con el ajuste, subir la tarifa de la zona 2 (esperado: G03 sigue en 6000; se deshace)
+BEGIN
+UPDATE 1
+ num_guia |   fecha    | ciudad_destino | peso_kg | tarifa_kg | valor 
+----------+------------+----------------+---------+-----------+-------
+ G03      | 2026-10-02 | Bogotá         |     1.0 |      6000 |  6000
+ G04      | 2026-10-02 | Medellín       |     3.0 |      6000 | 18000
+ G07      | 2026-10-08 | Bogotá         |     4.0 |      6000 | 24000
+ G08      | 2026-10-09 | Medellín       |     1.5 |      6000 |  9000
+(4 rows)
+
+ROLLBACK
+
+== Fin de casos.sql: los cuatro esquemas quedaron migrados ==
+Pager usage is off.
+SET
+
+== usuario: las claves naturales (documento, correo) no se repiten (esperado: 0 y 0) ==
+ documentos_repetidos | correos_repetidos 
+----------------------+-------------------
+                    0 |                 0
+(1 row)
+
+== usuario: perfil frente a las tablas lector y bibliotecario (dos fuentes del mismo dato; esperado: 0 contradicciones) ==
+                 contradiccion                  | filas 
+------------------------------------------------+-------
+ perfil lector sin fila en lector               |     0
+ fila en lector con otro perfil                 |     0
+ perfil bibliotecario sin fila en bibliotecario |     0
+ fila en bibliotecario con otro perfil          |     0
+(4 rows)
+
+== lector: un teléfono por lector, en una sola columna (esperado: 0 teléfonos con separadores) ==
+ telefonos_con_varios_valores 
+------------------------------
+                            0
+(1 row)
+
+== categoria: ¿nombres que solo cambian en mayúsculas? (esperado: 0 filas) ==
+ nombre | count 
+--------+-------
+(0 rows)
+
+== autor: ¿nombres que solo cambian en mayúsculas o espacios? (esperado: 0 filas) ==
+ nombre | count 
+--------+-------
+(0 rows)
+
+== libro: la categoría se guarda como FK, no como texto repetido (esperado: libros por categoría, sin nombres copiados) ==
+    categoria    | libros 
+-----------------+--------
+ Novela          |     18
+ Ciencia         |      3
+ Ciencia Ficción |      3
+ Infantil        |      3
+ Cuento          |      2
+(5 rows)
+
+== libro: los ejemplares disponibles NO se guardan; se calculan (esperado: los 5 libros con más copias prestadas ahora) ==
+     isbn      |               titulo               | copias_activas | prestadas_ahora | disponibles 
+---------------+------------------------------------+----------------+-----------------+-------------
+ 9780000000032 | Harry Potter y la piedra filosofal |              6 |               2 |           4
+ 9780000000014 | 1984                               |              6 |               1 |           5
+ 9780000000001 | Cien años de soledad               |              4 |               1 |           3
+ 9780000000026 | Crimen y castigo                   |              3 |               1 |           2
+ 9780000000031 | El nombre del viento               |              4 |               1 |           3
+(5 rows)
+
+== libro_autor: ¿pares repetidos? (esperado: 0 filas; la PK lo impide) ==
+ isbn | id_autor | count 
+------+----------+-------
+(0 rows)
+
+== ejemplar: libros con copias en estados distintos (esperado: 0, porque hoy todas las copias están activas; el estado es de cada copia) ==
+ libros_con_copias_en_estados_distintos 
+----------------------------------------
+                                      0
+(1 row)
+
+== prestamo: ¿fecha_vencimiento es siempre fecha_prestamo + 14? (dato que PARECE derivado) ==
+ prestamos | con_plazo_14 | con_otro_plazo 
+-----------+--------------+----------------
+        30 |           30 |              0
+(1 row)
+
+== prestamo: la mora NO se guarda como estado; se calcula (esperado: 5 préstamos en mora) ==
+ prestamos_en_mora 
+-------------------
+                 5
+(1 row)
+
+== prestamo: ¿hay una clave natural? Mismo ejemplar prestado dos veces el mismo día (esperado: 0 filas hoy, pero la regla no lo prohíbe) ==
+ isbn | numero_copia | fecha_prestamo | count 
+------+--------------+----------------+-------
+(0 rows)
+
+== prestamo: reglas que el esquema NO garantiza todavía (esperado: 0 lectores con más de 3 abiertos) ==
+ lectores_con_mas_de_3_abiertos 
+--------------------------------
+                              0
+(1 row)
+
+== carga.rechazo_carga: líneas registradas en varias corridas (esperado: 0 en una carga desde cero; aparecen si se repite una carga con errores) ==
+              archivo              | linea | veces 
+-----------------------------------+-------+-------
+ /scripts/datos/libros_propios.csv |     7 |     2
+ /scripts/datos/libros_propios.csv |     8 |     2
+ /scripts/datos/libros_propios.csv |     9 |     2
+(3 rows)
+
