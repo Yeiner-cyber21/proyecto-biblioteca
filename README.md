@@ -24,6 +24,7 @@ Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está
 9. [Evidencias](#9-evidencias)
 10. [Lecciones aprendidas](#10-lecciones-aprendidas)
 11. [Taller S18: formas normales](#11-taller-s18-formas-normales)
+12. [Taller S19: esquemas mal diseñados](#12-taller-s19-esquemas-mal-diseñados)
 
 ---
 
@@ -50,6 +51,9 @@ proyecto-biblioteca/
 │   │   ├── parte-a.sql              ← taller S16, Parte A: los 11 ejercicios resueltos por el grupo
 │   │   ├── S18-automotriz.sql       ← taller S18: planilla plana del taller "El Pistón" (script del profesor)
 │   │   ├── normalizacion.sql        ← taller S18, Parte B: la planilla llevada a 3FN, con verificación
+│   │   ├── S19-esquemas.sql         ← taller S19: cuatro esquemas mal diseñados (script del profesor)
+│   │   ├── casos.sql                ← taller S19, Parte A: diagnóstico, evidencia y migración de los 4 casos
+│   │   ├── parte-b-evidencia.sql    ← taller S19, Parte B: consultas de evidencia sobre el esquema biblioteca
 │   │   └── datos/                   ← 4 CSV semilla del curso + CSV propio del grupo
 │   └── data/                        ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json             ← conexión a PostgreSQL precargada en pgAdmin
@@ -59,6 +63,7 @@ proyecto-biblioteca/
 │   ├── evidencias.md                ← salidas de psql de todas las ejecuciones
 │   ├── README-entorno-docker.md     ← README original del entorno del profesor
 │   ├── S18-taller-normalizacion.md  ← taller S18: partes A1, A2 y C (formas normales)
+│   ├── S19-taller-esquemas.md       ← taller S19: los 4 casos explicados y la tabla de la Parte B
 │   └── pendientes.md                ← lo que falta (S15, S16 y los siguientes hitos)
 └── assets/                          ← capturas de las ejecuciones
 ```
@@ -121,6 +126,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 10/11/2026 | **Cierre del taller S16 (Hito 2).** Se comparó el repositorio con la guía de S16, punto por punto. Cambios: `datos-prestamos.sql` pasó a llamarse `datos-prueba.sql` (el nombre que pide la guía), con el resultado esperado de cada reporte y de los 8 casos escrito en el encabezado; cada reporte de `reportes.sql` lleva su resultado esperado y queda guardado como vista; nuevo `verificacion-parte-b.sql`, que arma la tabla de verificación desde esas vistas. Al revisar los casos se encontró que el caso 6 (préstamo que vence hoy) no se notaba en el reporte 3, porque Juan David ya era moroso por otros préstamos. Ese préstamo pasó a Isabella, que no tiene otro abierto, y los 4 reportes siguieron dando lo mismo. Prueba de control: con `<=` en vez de `<`, la verificación marca el caso 6 como `NO`. En `parte-a.sql` se agregó la respuesta a la pregunta del ejercicio 5. |
 | 10/11/2026 | **Corrida final de S16 en el Docker del grupo**, en el orden de la guía: `datos-prueba.sql` (`30 \| 20 \| 10 \| 5`), `reportes.sql` (21, 2, 4 y 5 filas, con las 4 vistas), `verificacion-parte-b.sql` (**9 de 9 coinciden**) y la Parte A (**11 de 11**). Las salidas reales quedaron en `docs/evidencias.md` (secciones 9 a 12) y las capturas, en `assets/paso8-*.png`. |
 | 11/11/2026 | **Taller S18 (formas normales).** Se agregó el script del profesor `S18-automotriz.sql` y se resolvió el taller completo: A1 (las 6 relaciones), A2 (1FN → 2FN → 3FN, con el esquema final en FNBC), la Parte B en `normalizacion.sql` y la Parte C (3FN frente a FNBC), en `docs/S18-taller-normalizacion.md`. La Parte B encontró una contradicción en la planilla (dos teléfonos para Jorge Mejía), la corrigió y reconstruyó la planilla exacta con `EXCEPT` (0 filas en los dos sentidos). Todo se probó en PostgreSQL 16. |
+| 17/11/2026 | **Taller S19 (esquemas mal diseñados).** Se agregó el script del profesor `S19-esquemas.sql` y se resolvieron los cuatro casos en `casos.sql`, cada uno con diagnóstico, evidencia, esquema corregido, migración en `BEGIN … COMMIT` (con conteos esperados y `EXCEPT`) y la queja resuelta: gimnasio (lista en una celda; Yoga 3 y Spinning 2), farmacia (grupo repetido; el cuarto medicamento), cursos libres (clave natural sin `UNIQUE`; Fotografía digital 380 000) y envíos (dato derivado; G07 24 000, con la tarifa aplicada como dato histórico). Parte B: el esquema `biblioteca` está en FNBC; se proponen dos reglas de integridad para S20 (`perfil` frente a `lector`, y nombres sin distinguir mayúsculas), con evidencia en `parte-b-evidencia.sql`. |
 
 ## 4. El esquema `biblioteca`
 
@@ -469,3 +475,23 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/S18-automotriz.s
 docker compose exec postgres psql -U curso -d curso -f /scripts/normalizacion.sql
 ```
 Resultado esperado: en (a), una sola contradicción (la cédula 16700002) y `UPDATE 1`; en (c), 3, 4, 4, 6, 5, 3 y 11 filas; en (d), 11 y 11 filas y **0 filas** en los dos `EXCEPT`; en (e), `UPDATE 1`, `INSERT 0 1` y `DELETE 2`, cada uno deshecho con `ROLLBACK`, y al final 11 líneas de orden y 6 órdenes.
+
+## 12. Taller S19: esquemas mal diseñados
+
+Una "clínica de esquemas": cuatro bases pequeñas del profesor (`gimnasio`, `farmacia`, `cursos_libres` y `envios`), cada una con un defecto de diseño y una queja del negocio. Viven en sus propios esquemas, así que **no tocan** `biblioteca`. La explicación de cada caso y la tabla de la Parte B están en [`docs/S19-taller-esquemas.md`](docs/S19-taller-esquemas.md).
+
+| Caso | Problema principal | Queja resuelta |
+|---|---|---|
+| gimnasio | `clases` es una lista en una celda (1FN); `plan → valor_plan` (3FN) | Yoga 3 y Spinning 2 (antes, 2 y 3) |
+| farmacia | `medicamento1..3` es un grupo repetido (1FN); `doc_paciente → nombre_paciente` (3FN) | Acetaminofén en 3 fórmulas, y ya se puede registrar un cuarto medicamento |
+| cursos libres | `id serial` sin `UNIQUE` de la clave natural; dependencias parciales (2FN) | Fotografía digital recaudó 380 000 (el duplicado de 200 000 se quitó) |
+| envíos | `valor` es un dato derivado guardado; ciudad y zona transitivas (3FN) | G07 vale 24 000 (se cobraron 42 000); la tarifa aplicada se guarda como dato histórico |
+
+**Parte B:** las 9 tablas de `biblioteca` están en FNBC. Se proponen para S20 dos reglas de integridad: amarrar `perfil` con `lector`/`bibliotecario` por una FK compuesta, y `UNIQUE` sin distinguir mayúsculas en `categoria` y `autor`.
+
+**Cómo ejecutarlo:**
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/casos.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/parte-b-evidencia.sql
+```
+`casos.sql` vuelve a crear los cuatro esquemas al empezar, así que se puede correr varias veces. Debe terminar con `== Fin de casos.sql ==`, con todos los `EXCEPT` en `(0 rows)` y tres `NOTICE: Rechazada, como debe ser`.

@@ -25,6 +25,6 @@ El código, la documentación y las evidencias del taller S16 están completos (
 
 | Cuándo | Qué falta |
 |---|---|
-| **Hito 3** (M5, S17 a S20) | Análisis de normalización del esquema `biblioteca` (mínimo 3FN), con sus dependencias funcionales. Se aplica el mismo método del taller S18. |
+| **S20 / Hito 3** | El análisis del esquema `biblioteca` ya está en la Parte B del S19 (`docs/S19-taller-esquemas.md`): las 9 tablas en FNBC. Falta en S20: aplicar los dos cambios propuestos (FK compuesta `perfil` ↔ `lector`/`bibliotecario` y `UNIQUE` sin mayúsculas en `categoria` y `autor`), decidir si se desnormaliza alguna columna a propósito y entregar el documento del Hito 3. |
 | **Hito 4** | Procedimiento almacenado y trigger, a partir de las reglas que el esquema no garantiza (README, sección 4): máximo 3 préstamos activos, no prestar a un lector en mora, coherencia de perfiles, etc. |
 | **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js y login con contraseñas bcrypt. La API puede leer los reportes de las 4 vistas que ya crea `reportes.sql` (por ejemplo, `biblioteca.reporte_prestamos_mora` para la lista con el botón "Enviar notificación"). |
