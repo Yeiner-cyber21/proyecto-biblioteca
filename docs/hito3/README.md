@@ -2,6 +2,8 @@
 
 **750006C Bases de Datos · Universidad del Valle · Grupo 9**
 
+Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
+
 La explicación completa está en el [README principal](../../README.md), secciones 10 y 11.
 
 ## Documentos de esta carpeta

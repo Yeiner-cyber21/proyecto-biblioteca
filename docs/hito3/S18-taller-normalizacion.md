@@ -2,6 +2,8 @@
 
 **750006C Bases de Datos · Universidad del Valle · Grupo 9**
 
+Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
+
 Caso: la planilla de servicios del **Taller Automotriz El Pistón**. Scripts:
 
 | Archivo | Qué es |

@@ -2,6 +2,8 @@
 
 **750006C Bases de Datos · Universidad del Valle · Grupo 9**
 
+Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
+
 | Archivo | Qué es |
 |---|---|
 | [`postgres/scripts/hito3/taller-S19/S19-esquemas.sql`](../../postgres/scripts/hito3/taller-S19/S19-esquemas.sql) | Script del profesor: los cuatro esquemas "en producción" (`gimnasio`, `farmacia`, `cursos_libres`, `envios`). |

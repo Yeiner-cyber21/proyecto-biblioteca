@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Grupo** | 9 |
-| **Integrantes** | Eisin Yeiner Tobar Bravo · Jeovany |
+| **Integrantes** | Eisin Yeiner Tobar Bravo · Giovanny Mora Segura |
 | **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
 | **Hito 3** (en curso) | Normalización: talleres S18 y S19, y examen del esquema `biblioteca` (S17 a S20) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |

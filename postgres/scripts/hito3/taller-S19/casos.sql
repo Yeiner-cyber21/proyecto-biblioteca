@@ -1,6 +1,7 @@
 -- =====================================================================
 -- casos.sql  ·  S19, Parte A: clínica de esquemas mal diseñados
 -- 750006C Bases de Datos · Universidad del Valle · Grupo 9
+-- Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
 --
 -- Cuatro esquemas "en producción", cada uno con una queja del negocio:
 --   Caso 1  gimnasio       socio

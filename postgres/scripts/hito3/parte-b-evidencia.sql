@@ -1,6 +1,7 @@
 -- =====================================================================
 -- parte-b-evidencia.sql  ·  S19, Parte B: examen del esquema "biblioteca"
 -- 750006C Bases de Datos · Universidad del Valle · Grupo 9
+-- Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
 --
 -- Una consulta de evidencia por tabla, para la tabla de la Parte B
 -- (docs/hito3/S19-taller-esquemas.md). Solo LEE: no cambia nada del proyecto.

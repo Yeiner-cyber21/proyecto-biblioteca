@@ -2,6 +2,8 @@
 
 **750006C Bases de Datos · Universidad del Valle · Grupo 9**
 
+Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
+
 Lista de trabajo que **todavía no se ha hecho**. Lo ya entregado (S14, los 4 reportes y el taller de S16) está documentado en el [README](../README.md).
 
 ## Para cerrar la entrega del Hito 2 (S16)

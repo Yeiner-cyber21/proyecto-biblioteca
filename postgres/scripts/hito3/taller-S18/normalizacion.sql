@@ -1,5 +1,7 @@
 -- =====================================================================
 -- normalizacion.sql  ·  S18, Parte B: la planilla de El Pistón llevada a 3FN
+-- 750006C Bases de Datos · Universidad del Valle · Grupo 9
+-- Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
 --
 -- Requisito: haber corrido antes S18-automotriz.sql, que crea el esquema
 -- "automotriz" con la tabla plana servicio_plano (11 filas, 6 órdenes).
