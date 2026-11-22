@@ -7,7 +7,7 @@
 | **Grupo** | 9 |
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Giovanny Mora Segura |
 | **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
-| **Hito 3** (en curso) | Normalización: talleres S18 y S19, y examen del esquema `biblioteca` (S17 a S20) |
+| **Hito 3** (en curso) | Normalización y desnormalización: talleres S18, S19 y S20, y examen del esquema `biblioteca` (S17 a S20) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -19,8 +19,8 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 | Hito | Sesiones | Scripts | Documentos | En este README |
 |---|---|---|---|---|
 | **Hito 2**: esquema, carga desde CSV y los 4 reportes | S14 a S16 | [`postgres/scripts/hito2/`](postgres/scripts/hito2/) (taller S16 en [`taller-S16/`](postgres/scripts/hito2/taller-S16/)) y los CSV en [`postgres/scripts/datos/`](postgres/scripts/datos/) | [`docs/hito2/`](docs/hito2/): mapeo y criterios, evidencias y capturas | Secciones 4 a 9 |
-| **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/) y [`taller-S19/`](postgres/scripts/hito3/taller-S19/)) | [`docs/hito3/`](docs/hito3/): talleres S18 y S19 y la tabla del esquema | Secciones 10 y 11 |
-| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 12 |
+| **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/), [`taller-S19/`](postgres/scripts/hito3/taller-S19/) y [`taller-S20/`](postgres/scripts/hito3/taller-S20/)) | [`docs/hito3/`](docs/hito3/): talleres S18, S19 y S20 y la tabla del esquema | Secciones 10 a 12 |
+| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 13 |
 
 ## Contenido
 
@@ -42,10 +42,11 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 
 10. [Taller S18: formas normales](#10-taller-s18-formas-normales)
 11. [Taller S19: esquemas mal diseñados](#11-taller-s19-esquemas-mal-diseñados)
+12. [Taller S20: desnormalización para rendimiento](#12-taller-s20-desnormalización-para-rendimiento)
 
 **Cierre**
 
-12. [Lecciones aprendidas](#12-lecciones-aprendidas)
+13. [Lecciones aprendidas](#13-lecciones-aprendidas)
 
 ---
 
@@ -78,9 +79,12 @@ proyecto-biblioteca/
 │   │       ├── taller-S18/
 │   │       │   ├── S18-automotriz.sql ← planilla plana del taller "El Pistón" (script del profesor)
 │   │       │   └── normalizacion.sql  ← Parte B: la planilla llevada a 3FN, con verificación
-│   │       └── taller-S19/
-│   │           ├── S19-esquemas.sql   ← cuatro esquemas mal diseñados (script del profesor)
-│   │           └── casos.sql          ← Parte A: diagnóstico, evidencia y migración de los 4 casos
+│   │       ├── taller-S19/
+│   │       │   ├── S19-esquemas.sql   ← cuatro esquemas mal diseñados (script del profesor)
+│   │       │   └── casos.sql          ← Parte A: diagnóstico, evidencia y migración de los 4 casos
+│   │       └── taller-S20/
+│   │           ├── S20-rendimiento.sql ← biblioteca "grande" para medir (script del profesor)
+│   │           └── a1-…a5-*.sql       ← Parte A: medir, indexar, desnormalizar (A1 a A5)
 │   └── data/                          ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json               ← conexión a PostgreSQL precargada en pgAdmin
 ├── node/                              ← API REST (Hito 5)
@@ -92,7 +96,8 @@ proyecto-biblioteca/
     ├── hito3/                         ← HITO 3
     │   ├── S18-taller-normalizacion.md ← taller S18: partes A1, A2, B y C (formas normales)
     │   ├── S19-taller-esquemas.md     ← taller S19: los 4 casos y la tabla del esquema (Parte B)
-    │   └── S19-salida-psql.txt        ← taller S19: salida de psql del Docker del grupo
+    │   ├── S19-salida-psql.txt        ← taller S19: salida de psql del Docker del grupo
+    │   └── S20-taller-desnormalizacion.md ← taller S20, Parte A: mediciones y respuestas A1 a A5
     ├── pendientes.md                  ← lo que falta (siguientes hitos)
     └── README-entorno-docker.md       ← README original del entorno del profesor
 ```
@@ -165,6 +170,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 11/11/2026 | **Taller S18 (formas normales).** Se agregó el script del profesor `S18-automotriz.sql` y se resolvió el taller completo: A1 (las 6 relaciones), A2 (1FN → 2FN → 3FN, con el esquema final en FNBC), la Parte B en `normalizacion.sql` y la Parte C (3FN frente a FNBC), en `docs/hito3/S18-taller-normalizacion.md`. La Parte B encontró una contradicción en la planilla (dos teléfonos para Jorge Mejía), la corrigió y reconstruyó la planilla exacta con `EXCEPT` (0 filas en los dos sentidos). Todo se probó en PostgreSQL 16. |
 | 17/11/2026 | **Taller S19 (esquemas mal diseñados).** Se agregó el script del profesor `S19-esquemas.sql` y se resolvieron los cuatro casos en `casos.sql`, cada uno con diagnóstico, evidencia, esquema corregido, migración en `BEGIN … COMMIT` (con conteos esperados y `EXCEPT`) y la queja resuelta: gimnasio (lista en una celda; Yoga 3 y Spinning 2), farmacia (grupo repetido; el cuarto medicamento), cursos libres (clave natural sin `UNIQUE`; Fotografía digital 380 000) y envíos (dato derivado; G07 24 000, con la tarifa aplicada como dato histórico). Parte B: el esquema `biblioteca` está en FNBC; se proponen dos reglas de integridad para S20 (`perfil` frente a `lector`, y nombres sin distinguir mayúsculas), con evidencia en `parte-b-evidencia.sql`. |
 | 17/11/2026 | **Organización del repositorio por hitos.** Los scripts se separaron en `postgres/scripts/hito2/` y `postgres/scripts/hito3/` (con una subcarpeta por taller), y los documentos en `docs/hito2/` (con las capturas) y `docs/hito3/`. Se quitó `entregas/s16/consultas.sql`, que era una copia idéntica de `parte-a.sql`. Se probó que todos los scripts corren con las rutas nuevas. |
+| 22/11/2026 | **Taller S20, Parte A (desnormalización para rendimiento).** Sobre el esquema `rendimiento` del profesor (303 750 préstamos), en el Docker del grupo: el catálogo pasó de ~30 ms (sin índices) a ~4 ms con dos índices, sin redundancia, y a ~0,64 ms con la columna desnormalizada `disponibles`; el top 20, de ~195 ms a ~0,03 ms con una vista materializada. Se demostró la copia desincronizada (vista `descuadre`), el atraso de la vista materializada hasta el `REFRESH` y que `fecha_esperada` es un dato histórico si el plazo puede cambiar. Scripts en `postgres/scripts/hito3/taller-S20/`; respuestas en `docs/hito3/S20-taller-desnormalizacion.md`. |
 
 ---
 
@@ -480,7 +486,7 @@ Parte A: los 11 ejercicios sobre el esquema `tienda`, cada uno con las filas esp
 
 ---
 
-> **HITO 3** (S17 a S20): normalización. Secciones 10 y 11. Scripts en `postgres/scripts/hito3/`; documentos en `docs/hito3/`.
+> **HITO 3** (S17 a S20): normalización y desnormalización. Secciones 10 a 12. Scripts en `postgres/scripts/hito3/`; documentos en `docs/hito3/`.
 
 ## 10. Taller S18: formas normales
 
@@ -529,9 +535,30 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-ev
 ```
 `casos.sql` vuelve a crear los cuatro esquemas al empezar, así que se puede correr varias veces. Debe terminar con `== Fin de casos.sql ==`, con todos los `EXCEPT` en `(0 rows)` y tres `NOTICE: Rechazada, como debe ser`.
 
+## 12. Taller S20: desnormalización para rendimiento
+
+Se mide, sobre una biblioteca "grande" generada por el profesor (esquema `rendimiento`: 5 000 libros, 15 000 ejemplares y 303 750 préstamos), cuándo vale la pena volver a poner redundancia a propósito. Los scripts están en [`postgres/scripts/hito3/taller-S20/`](postgres/scripts/hito3/taller-S20/), y las respuestas de A1 a A5, con la tabla de mediciones, en [`docs/hito3/S20-taller-desnormalizacion.md`](docs/hito3/S20-taller-desnormalizacion.md).
+
+| Consulta | Sin índices | Con índices | Desnormalizada |
+|---|---|---|---|
+| Catálogo (`Libro 12%`) | ~30 ms | ~4 ms | ~0,64 ms (columna `disponibles`) |
+| Top 20 más prestados | ~195 ms | no aplica | ~0,03 ms (vista materializada) |
+
+En el catálogo, el **índice** logra casi toda la mejora sin agregar redundancia. En el top 20 no hay índice que sirva, y la **vista materializada** sí se justifica, con un `REFRESH` diario. Toda copia desnormalizada necesita su mecanismo (un trigger, en el Hito 4) y su consulta de verificación (la vista `descuadre`).
+
+**Cómo ejecutarlo** (en orden; para medir desde cero, primero `S20-rendimiento.sql`):
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/S20-rendimiento.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a1-catalogo.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a2-indices.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a3-desnormalizar.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a4-vista-materializada.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a5-derivado-o-historico.sql
+```
+
 ---
 
-## 12. Lecciones aprendidas
+## 13. Lecciones aprendidas
 
 - **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
 - **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
