@@ -122,30 +122,39 @@ WHERE s.motivo IS NULL
 --    las que dependen de libro (libro_autor, ejemplar).
 -- ---------------------------------------------------------------------
 
--- 5a. Categorías nuevas. ON CONFLICT DO NOTHING: si ya existe, no hace nada
---     (por eso categoria.nombre tiene UNIQUE).
+-- 5a. Categorías nuevas. ON CONFLICT DO NOTHING: si ya existe, no hace nada.
+--     Hito 3: "ya existe" se decide SIN distinguir mayúsculas, con el mismo
+--     índice único del esquema (categoria_nombre_lower_key). Si el archivo
+--     trae la misma categoría escrita de dos formas, se guarda la primera.
 INSERT INTO biblioteca.categoria (nombre)
-SELECT DISTINCT categoria FROM carga.stg_libro WHERE motivo IS NULL
-ON CONFLICT (nombre) DO NOTHING;
+SELECT DISTINCT ON (lower(categoria)) categoria
+FROM carga.stg_libro WHERE motivo IS NULL
+ORDER BY lower(categoria), linea_csv
+ON CONFLICT ((lower(nombre))) DO NOTHING;
 
--- 5b. Autores nuevos, igual que las categorías.
+-- 5b. Autores nuevos, igual que las categorías (sin distinguir mayúsculas
+--     ni espacios: autor_nombre_lower_key).
 INSERT INTO biblioteca.autor (nombre)
-SELECT DISTINCT autor FROM carga.stg_libro WHERE motivo IS NULL
-ON CONFLICT (nombre) DO NOTHING;
+SELECT DISTINCT ON (lower(trim(autor))) autor
+FROM carga.stg_libro WHERE motivo IS NULL
+ORDER BY lower(trim(autor)), linea_csv
+ON CONFLICT ((lower(trim(nombre)))) DO NOTHING;
 
 -- 5c. Libros: el CSV trae el NOMBRE de la categoría, pero libro necesita su
---     id_categoria, así que se busca con un JOIN.
+--     id_categoria, así que se busca con un JOIN (Hito 3: sin distinguir
+--     mayúsculas, igual que el índice único).
 INSERT INTO biblioteca.libro (isbn, titulo, anio_publicacion, id_categoria)
 SELECT s.isbn, s.titulo, s.anio_publicacion::smallint, c.id_categoria
 FROM carga.stg_libro s
-JOIN biblioteca.categoria c ON c.nombre = s.categoria
+JOIN biblioteca.categoria c ON lower(c.nombre) = lower(s.categoria)
 WHERE s.motivo IS NULL;
 
--- 5d. Relación N:M libro-autor, buscando el id_autor por nombre.
+-- 5d. Relación N:M libro-autor, buscando el id_autor por nombre (Hito 3:
+--     sin distinguir mayúsculas ni espacios, igual que el índice único).
 INSERT INTO biblioteca.libro_autor (isbn, id_autor)
 SELECT s.isbn, a.id_autor
 FROM carga.stg_libro s
-JOIN biblioteca.autor a ON a.nombre = s.autor
+JOIN biblioteca.autor a ON lower(trim(a.nombre)) = lower(trim(s.autor))
 WHERE s.motivo IS NULL;
 
 -- 5e. Ejemplares: el número "n" del CSV se convierte en n filas (copias 1..n).

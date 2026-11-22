@@ -1,6 +1,13 @@
 -- =====================================================================
 -- 01_esquema.sql  ·  Esquema del proyecto Biblioteca (biblioteca-v2)
--- 750006C Bases de Datos · Universidad del Valle · Hito 2
+-- 750006C Bases de Datos · Universidad del Valle · Hito 2, revisado en el Hito 3 (S20)
+-- Grupo 9 · Integrantes: Eisin Yeiner Tobar Bravo · Giovanny Mora Segura
+--
+-- Hito 3: el esquema ya estaba en FNBC (S19, Parte B). Se agregaron dos
+-- reglas de integridad (marcadas con "Hito 3" abajo): el perfil de
+-- lector y bibliotecario amarrado con una FK compuesta, y nombres de
+-- categoría y autor únicos sin distinguir mayúsculas. Una base existente
+-- se migra con postgres/scripts/hito3/normalizacion.sql.
 --
 -- Script de arranque: Docker lo ejecuta solo, UNA vez, cuando la carpeta
 -- postgres/data/ está vacía (se monta en /docker-entrypoint-initdb.d).
@@ -51,20 +58,34 @@ CREATE TABLE usuario (
                      CONSTRAINT ck_usuario_perfil CHECK (perfil IN ('lector', 'bibliotecario', 'administrador', 'auditor')),
     debe_cambiar_contrasena  boolean     NOT NULL DEFAULT true,   -- la clave inicial se cambia en el primer login
     activo                   boolean     NOT NULL DEFAULT true,   -- baja = inactivar, no borrar (conserva historial)
-    fecha_registro           timestamptz NOT NULL DEFAULT now()
+    fecha_registro           timestamptz NOT NULL DEFAULT now(),
+    -- Hito 3: destino de las FK compuestas de lector y bibliotecario
+    CONSTRAINT usuario_id_perfil_key UNIQUE (id_usuario, perfil)
 );
 
--- Subtipo: la PK es a la vez FK hacia usuario (relación 1:1 de especialización)
+-- Subtipo: la PK es a la vez FK hacia usuario (relación 1:1 de especialización).
+-- Hito 3: "perfil" es una copia CONTROLADA de usuario.perfil. Siempre vale
+-- 'lector' (CHECK), y la FK compuesta (id_usuario, perfil) obliga a que el
+-- usuario apuntado tenga ese mismo perfil. Así es imposible que alguien esté
+-- en lector sin ser lector, o que se le cambie el perfil mientras siga aquí.
 CREATE TABLE lector (
-    id_usuario  integer      PRIMARY KEY REFERENCES usuario (id_usuario) ON DELETE CASCADE,
+    id_usuario  integer      PRIMARY KEY,
     telefono    varchar(15)  NOT NULL
-                CONSTRAINT ck_lector_telefono CHECK (telefono ~ '^[0-9]{7,15}$')
+                CONSTRAINT ck_lector_telefono CHECK (telefono ~ '^[0-9]{7,15}$'),
+    perfil      varchar(13)  NOT NULL DEFAULT 'lector'
+                CONSTRAINT ck_lector_perfil CHECK (perfil = 'lector'),
+    CONSTRAINT lector_usuario_perfil_fkey FOREIGN KEY (id_usuario, perfil)
+        REFERENCES usuario (id_usuario, perfil) ON DELETE CASCADE
 );
 
 -- Subtipo sin atributos propios: existe para que prestamo apunte a un
--- bibliotecario y no a cualquier usuario.
+-- bibliotecario y no a cualquier usuario. Hito 3: misma regla que lector.
 CREATE TABLE bibliotecario (
-    id_usuario  integer  PRIMARY KEY REFERENCES usuario (id_usuario) ON DELETE CASCADE
+    id_usuario  integer      PRIMARY KEY,
+    perfil      varchar(13)  NOT NULL DEFAULT 'bibliotecario'
+                CONSTRAINT ck_bibliotecario_perfil CHECK (perfil = 'bibliotecario'),
+    CONSTRAINT bibliotecario_usuario_perfil_fkey FOREIGN KEY (id_usuario, perfil)
+        REFERENCES usuario (id_usuario, perfil) ON DELETE CASCADE
 );
 
 -- ---------------------------------------------------------------------
@@ -76,6 +97,9 @@ CREATE TABLE categoria (
     nombre        varchar(40)  NOT NULL UNIQUE
                   CONSTRAINT ck_categoria_nombre CHECK (nombre <> '')
 );
+-- Hito 3: "Novela" y "novela" serían la misma categoría; el UNIQUE de arriba
+-- distingue mayúsculas, este índice no.
+CREATE UNIQUE INDEX categoria_nombre_lower_key ON categoria (lower(nombre));
 
 -- Simplificación documentada: dos autores distintos con el mismo nombre
 -- no se pueden registrar (el nombre es la clave natural que trae el CSV).
@@ -84,6 +108,8 @@ CREATE TABLE autor (
     nombre    varchar(120)  NOT NULL UNIQUE
               CONSTRAINT ck_autor_nombre CHECK (nombre <> '')
 );
+-- Hito 3: el mismo autor no puede entrar dos veces con otras mayúsculas o espacios.
+CREATE UNIQUE INDEX autor_nombre_lower_key ON autor (lower(trim(nombre)));
 
 -- "ejemplares_disponibles" NO es columna: es un atributo derivado
 -- (regla 4 de S11) que se calcula contando ejemplares sin préstamo abierto.

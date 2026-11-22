@@ -162,7 +162,7 @@ Hoy los 307 751 préstamos cumplen `fecha_esperada = fecha_prestamo + 14`. Miran
 
 - **Si el plazo nunca cambia y no hay excepciones:** es un dato **derivado**, y guardarlo aparte es redundancia, porque alguien podría escribir otra fecha. Se calcula en la consulta o se guarda como **columna generada** (`GENERATED ALWAYS AS (fecha_prestamo + 14) STORED`), que nadie puede escribir a mano. Intentarlo da `can only be updated to DEFAULT`.
 - **Si la biblioteca puede cambiar el plazo o dar plazos especiales:** la fecha esperada de cada préstamo es un **hecho histórico** del préstamo. Depende de su `id`, no de una regla actual, así que guardarla es **correcto en 3FN**. Lo comprobamos con los datos:
-  - **Si el plazo pasa a 21 días** y la fecha se recalculara con la regla nueva, los préstamos abiertos en mora bajarían de **2 250 a 1 250**: **1 000 préstamos "saldrían de mora" sin que nadie devolviera nada**.
-  - **Un préstamo renovado** (14 días más) **no está en mora** con su fecha guardada, pero lo estaría si se calculara con +14.
+  - **Si el plazo pasa a 21 días** y la fecha se recalculara con la regla nueva, en el Docker del grupo los préstamos abiertos en mora bajarían de **1 750 a 1 000**: **750 préstamos "saldrían de mora" sin que nadie devolviera nada**. Los números dependen del día en que se corre, porque las fechas son relativas a `CURRENT_DATE`; corrido el mismo día que `S20-rendimiento.sql`, da 2 250 y 1 250. La conclusión es la misma.
+  - **Un préstamo renovado** (el 300016, con 14 días más) **no está en mora** con su fecha guardada, pero lo estaría si se calculara con +14.
 
 Es la misma distinción del caso 4 del S19 (la tarifa aplicada a un envío). **En nuestro proyecto**, `prestamo.fecha_vencimiento` se **guarda**, porque la biblioteca puede ajustar el plazo y se prevén renovaciones: es un dato histórico, no redundancia.
