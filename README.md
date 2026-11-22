@@ -7,7 +7,7 @@
 | **Grupo** | 9 |
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Giovanny Mora Segura |
 | **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
-| **Hito 3** (en curso) | Normalización y desnormalización: talleres S18, S19 y S20, y examen del esquema `biblioteca` (S17 a S20) |
+| **Hito 3** (listo para entregar) | Documento de normalización, esquema actualizado en `postgres/init/` y migración `normalizacion.sql`; talleres S18, S19 y S20 (S17 a S20) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -19,8 +19,8 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 | Hito | Sesiones | Scripts | Documentos | En este README |
 |---|---|---|---|---|
 | **Hito 2**: esquema, carga desde CSV y los 4 reportes | S14 a S16 | [`postgres/scripts/hito2/`](postgres/scripts/hito2/) (taller S16 en [`taller-S16/`](postgres/scripts/hito2/taller-S16/)) y los CSV en [`postgres/scripts/datos/`](postgres/scripts/datos/) | [`docs/hito2/`](docs/hito2/): mapeo y criterios, evidencias y capturas | Secciones 4 a 9 |
-| **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/), [`taller-S19/`](postgres/scripts/hito3/taller-S19/) y [`taller-S20/`](postgres/scripts/hito3/taller-S20/)) | [`docs/hito3/`](docs/hito3/): talleres S18, S19 y S20 y la tabla del esquema | Secciones 10 a 12 |
-| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 13 |
+| **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/), [`taller-S19/`](postgres/scripts/hito3/taller-S19/) y [`taller-S20/`](postgres/scripts/hito3/taller-S20/)) | [`docs/hito3/`](docs/hito3/): **documento de normalización**, evidencias y talleres S18, S19 y S20 | Secciones 10 a 13 |
+| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 14 |
 
 ## Contenido
 
@@ -43,10 +43,11 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 10. [Taller S18: formas normales](#10-taller-s18-formas-normales)
 11. [Taller S19: esquemas mal diseñados](#11-taller-s19-esquemas-mal-diseñados)
 12. [Taller S20: desnormalización para rendimiento](#12-taller-s20-desnormalización-para-rendimiento)
+13. [Entrega del Hito 3: normalización del esquema](#13-entrega-del-hito-3-normalización-del-esquema)
 
 **Cierre**
 
-13. [Lecciones aprendidas](#13-lecciones-aprendidas)
+14. [Lecciones aprendidas](#14-lecciones-aprendidas)
 
 ---
 
@@ -60,7 +61,7 @@ proyecto-biblioteca/
 ├── docker-compose.yml                 ← entorno del curso: PostgreSQL 16 + pgAdmin + Node.js
 ├── postgres/
 │   ├── init/                          ← se ejecuta SOLO, una vez, cuando la base está vacía
-│   │   ├── 01_esquema.sql             ← esquema "biblioteca" (biblioteca-v2 del taller S11)
+│   │   ├── 01_esquema.sql             ← esquema "biblioteca" (biblioteca-v2 del S11, revisado en el Hito 3)
 │   │   └── 02_carga.sql               ← esquema "carga": bitácora de rechazos y tablas de paso
 │   ├── scripts/                       ← se ejecutan a mano (dentro del contenedor: /scripts)
 │   │   ├── datos/                     ← 4 CSV semilla del curso + CSV propio del grupo
@@ -75,6 +76,7 @@ proyecto-biblioteca/
 │   │   │       ├── S16-tienda.sql     ← esquema de práctica "tienda" (script del profesor)
 │   │   │       └── parte-a.sql        ← Parte A: los 11 ejercicios resueltos por el grupo
 │   │   └── hito3/                     ← HITO 3 (S17 a S20)
+│   │       ├── normalizacion.sql      ← Hito 3: migra una base con datos al esquema nuevo
 │   │       ├── parte-b-evidencia.sql  ← S19 parte B: evidencia sobre el esquema biblioteca
 │   │       ├── taller-S18/
 │   │       │   ├── S18-automotriz.sql ← planilla plana del taller "El Pistón" (script del profesor)
@@ -94,6 +96,8 @@ proyecto-biblioteca/
     │   ├── evidencias.md              ← salidas de psql de todas las ejecuciones
     │   └── capturas/                  ← capturas de pantalla de las ejecuciones
     ├── hito3/                         ← HITO 3
+    │   ├── hito3-documento-normalizacion.md ← ENTREGA DEL HITO 3: documento de normalización
+    │   ├── hito3-evidencias.md        ← Hito 3: salidas de psql (migración, init y reportes)
     │   ├── S18-taller-normalizacion.md ← taller S18: partes A1, A2, B y C (formas normales)
     │   ├── S19-taller-esquemas.md     ← taller S19: los 4 casos y la tabla del esquema (Parte B)
     │   ├── S19-salida-psql.txt        ← taller S19: salida de psql del Docker del grupo
@@ -136,7 +140,11 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/taller-S16
 docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/taller-S16/parte-a.sql
 ```
 
-**5. Hito 3: talleres S18 y S19, y examen del esquema del proyecto.** Los talleres usan sus propios esquemas (`automotriz`, `gimnasio`, `farmacia`, `cursos_libres` y `envios`) y no tocan `biblioteca`. El examen solo lee `biblioteca`; correrlo el mismo día que `datos-prueba.sql`.
+**5. Hito 3.** Una base creada desde cero con `init/` ya nace con el esquema del Hito 3. Una base creada antes se migra con:
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/normalizacion.sql
+```
+Los talleres S18 y S19 y el examen del esquema del proyecto (los comandos del S20 están en la sección 12). Los talleres usan sus propios esquemas (`automotriz`, `gimnasio`, `farmacia`, `cursos_libres` y `envios`) y no tocan `biblioteca`. El examen solo lee `biblioteca`; correrlo el mismo día que `datos-prueba.sql`.
 ```powershell
 docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/S18-automotriz.sql
 docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S18/normalizacion.sql
@@ -171,6 +179,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 17/11/2026 | **Taller S19 (esquemas mal diseñados).** Se agregó el script del profesor `S19-esquemas.sql` y se resolvieron los cuatro casos en `casos.sql`, cada uno con diagnóstico, evidencia, esquema corregido, migración en `BEGIN … COMMIT` (con conteos esperados y `EXCEPT`) y la queja resuelta: gimnasio (lista en una celda; Yoga 3 y Spinning 2), farmacia (grupo repetido; el cuarto medicamento), cursos libres (clave natural sin `UNIQUE`; Fotografía digital 380 000) y envíos (dato derivado; G07 24 000, con la tarifa aplicada como dato histórico). Parte B: el esquema `biblioteca` está en FNBC; se proponen dos reglas de integridad para S20 (`perfil` frente a `lector`, y nombres sin distinguir mayúsculas), con evidencia en `parte-b-evidencia.sql`. |
 | 17/11/2026 | **Organización del repositorio por hitos.** Los scripts se separaron en `postgres/scripts/hito2/` y `postgres/scripts/hito3/` (con una subcarpeta por taller), y los documentos en `docs/hito2/` (con las capturas) y `docs/hito3/`. Se quitó `entregas/s16/consultas.sql`, que era una copia idéntica de `parte-a.sql`. Se probó que todos los scripts corren con las rutas nuevas. |
 | 22/11/2026 | **Taller S20, Parte A (desnormalización para rendimiento).** Sobre el esquema `rendimiento` del profesor (303 750 préstamos), en el Docker del grupo: el catálogo pasó de ~30 ms (sin índices) a ~4 ms con dos índices, sin redundancia, y a ~0,64 ms con la columna desnormalizada `disponibles`; el top 20, de ~195 ms a ~0,03 ms con una vista materializada. Se demostró la copia desincronizada (vista `descuadre`), el atraso de la vista materializada hasta el `REFRESH` y que `fecha_esperada` es un dato histórico si el plazo puede cambiar. Scripts en `postgres/scripts/hito3/taller-S20/`; respuestas en `docs/hito3/S20-taller-desnormalizacion.md`. |
+| 22/11/2026 | **Entrega del Hito 3.** El esquema ya estaba en FNBC (S19). Se aplicaron dos reglas de integridad: el perfil de `lector` y `bibliotecario` amarrado con una FK compuesta, y nombres de categoría y autor únicos sin distinguir mayúsculas. Se actualizó `postgres/init/01_esquema.sql`, se escribió la migración `postgres/scripts/hito3/normalizacion.sql` y se ajustó `carga-libros.sql`. En el Docker del grupo: migración con conteos iguales (21, 20, 1, 10 y 33) y `EXCEPT` en 0, el `init/` probado en la base aparte `prueba_init`, y los reportes del S16 sobre el esquema nuevo con 21, 2, 4 y 5 filas y verificación 9 de 9. Documento: `docs/hito3/hito3-documento-normalizacion.md`. |
 
 ---
 
@@ -178,7 +187,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 
 ## 4. El esquema `biblioteca`
 
-Archivo: [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql). Tiene 9 tablas.
+Archivo: [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql). Tiene 9 tablas. Esta sección describe el esquema del Hito 2; en el Hito 3 se le agregaron dos reglas de integridad (sección 13).
 
 | Tabla | Qué guarda | Claves y restricciones principales |
 |---|---|---|
@@ -214,7 +223,7 @@ Archivo: [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql). Tiene 9
 - Todo libro tiene al menos un autor (participación total en una relación N:M). Hoy lo exige la carga.
 - Un lector tiene máximo 3 préstamos activos.
 - Un lector en mora no puede pedir préstamos.
-- Una fila de `lector` debe corresponder a un usuario con `perfil = 'lector'` (lo mismo para `bibliotecario`).
+- ~~Una fila de `lector` debe corresponder a un usuario con `perfil = 'lector'` (lo mismo para `bibliotecario`).~~ **Garantizada desde el Hito 3** con una FK compuesta (sección 13).
 - Solo se prestan ejemplares en estado `activo` a usuarios activos.
 - El año de publicación no puede ser posterior al año actual. El `CHECK` usa 2100 fijo; el año actual lo valida la carga.
 
@@ -486,7 +495,7 @@ Parte A: los 11 ejercicios sobre el esquema `tienda`, cada uno con las filas esp
 
 ---
 
-> **HITO 3** (S17 a S20): normalización y desnormalización. Secciones 10 a 12. Scripts en `postgres/scripts/hito3/`; documentos en `docs/hito3/`.
+> **HITO 3** (S17 a S20): normalización y desnormalización. Secciones 10 a 13 (la 13 es la entrega). Scripts en `postgres/scripts/hito3/`; documentos en `docs/hito3/`.
 
 ## 10. Taller S18: formas normales
 
@@ -556,9 +565,26 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20
 docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S20/a5-derivado-o-historico.sql
 ```
 
+## 13. Entrega del Hito 3: normalización del esquema
+
+**Documento de normalización:** [`docs/hito3/hito3-documento-normalizacion.md`](docs/hito3/hito3-documento-normalizacion.md). Tiene las 6 secciones de la guía del S20: esquema antes, dependencias funcionales con su regla y claves candidatas, forma normal y problemas con su evidencia, cambios y migración con conteos, desnormalizaciones deliberadas y esquema después. Las salidas de `psql` que lo respaldan están en [`docs/hito3/hito3-evidencias.md`](docs/hito3/hito3-evidencias.md).
+
+| Pieza del checkpoint (S20) | Dónde quedó |
+|---|---|
+| Análisis de formas normales con dependencias funcionales | Documento, secciones 2 y 3 (parte de la tabla de la Parte B del S19) |
+| Corrección de anomalías o desnormalización justificada | Documento, secciones 4 y 5; [`postgres/scripts/hito3/normalizacion.sql`](postgres/scripts/hito3/normalizacion.sql) |
+| Esquema actualizado y coherente con el análisis | [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql), probado en una base vacía; documento, sección 6 |
+| Reportes del S16 corridos sobre el esquema nuevo | [`docs/hito3/hito3-evidencias.md`](docs/hito3/hito3-evidencias.md), sección 3: 21, 2, 4 y 5 filas, y verificación 9 de 9 |
+
+**En resumen:** el esquema ya estaba en FNBC. Se agregaron dos reglas de integridad:
+- El perfil de `lector` y `bibliotecario`, amarrado a `usuario` con una FK compuesta. Es la única redundancia del esquema, deliberada y protegida.
+- Nombres de categoría y autor únicos sin distinguir mayúsculas.
+
+No se desnormaliza `ejemplares_disponibles` ni el estado del préstamo: con nuestro volumen y con el índice parcial que ya existe, no se justifica (medido en el S20).
+
 ---
 
-## 13. Lecciones aprendidas
+## 14. Lecciones aprendidas
 
 - **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
 - **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
