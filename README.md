@@ -7,7 +7,7 @@
 | **Grupo** | 9 |
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Giovanny Mora Segura |
 | **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
-| **Hito 3** (listo para entregar) | Documento de normalización, esquema actualizado en `postgres/init/` y migración `normalizacion.sql`; talleres S18, S19 y S20 (S17 a S20) |
+| **Hito 3** (entregado el 24/11/2026) | Documento de normalización, esquema actualizado en `postgres/init/` y migración `normalizacion.sql`; talleres S18, S19 y S20 (S17 a S20) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -180,6 +180,7 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 17/11/2026 | **Organización del repositorio por hitos.** Los scripts se separaron en `postgres/scripts/hito2/` y `postgres/scripts/hito3/` (con una subcarpeta por taller), y los documentos en `docs/hito2/` (con las capturas) y `docs/hito3/`. Se quitó `entregas/s16/consultas.sql`, que era una copia idéntica de `parte-a.sql`. Se probó que todos los scripts corren con las rutas nuevas. |
 | 22/11/2026 | **Taller S20, Parte A (desnormalización para rendimiento).** Sobre el esquema `rendimiento` del profesor (303 750 préstamos), en el Docker del grupo: el catálogo pasó de ~30 ms (sin índices) a ~4 ms con dos índices, sin redundancia, y a ~0,64 ms con la columna desnormalizada `disponibles`; el top 20, de ~195 ms a ~0,03 ms con una vista materializada. Se demostró la copia desincronizada (vista `descuadre`), el atraso de la vista materializada hasta el `REFRESH` y que `fecha_esperada` es un dato histórico si el plazo puede cambiar. Scripts en `postgres/scripts/hito3/taller-S20/`; respuestas en `docs/hito3/S20-taller-desnormalizacion.md`. |
 | 22/11/2026 | **Entrega del Hito 3.** El esquema ya estaba en FNBC (S19). Se aplicaron dos reglas de integridad: el perfil de `lector` y `bibliotecario` amarrado con una FK compuesta, y nombres de categoría y autor únicos sin distinguir mayúsculas. Se actualizó `postgres/init/01_esquema.sql`, se escribió la migración `postgres/scripts/hito3/normalizacion.sql` y se ajustó `carga-libros.sql`. En el Docker del grupo: migración con conteos iguales (21, 20, 1, 10 y 33) y `EXCEPT` en 0, el `init/` probado en la base aparte `prueba_init`, y los reportes del S16 sobre el esquema nuevo con 21, 2, 4 y 5 filas y verificación 9 de 9. Documento: `docs/hito3/hito3-documento-normalizacion.md`. |
+| 24/11/2026 | **Commit de entrega del Hito 3** («Entrega hito 3») en `main`, como lo pidió el profesor, y archivo `.txt` con el link del repositorio subido al campus. |
 
 ---
 

@@ -27,6 +27,6 @@ El código, la documentación y las evidencias del taller S16 están completos (
 
 | Cuándo | Qué falta |
 |---|---|
-| **Hito 3** | Listo en el repositorio: `docs/hito3/hito3-documento-normalizacion.md`, `postgres/init/` actualizado, `postgres/scripts/hito3/normalizacion.sql` y los reportes del S16 sobre el esquema nuevo (`docs/hito3/hito3-evidencias.md`). Falta solo confirmar la fecha y la forma de entrega con el profesor. |
+| **Hito 3** | **Entregado el 24/11/2026** con el commit «Entrega hito 3» en `main` y el link del repositorio en el campus. Contenido: `docs/hito3/hito3-documento-normalizacion.md`, `postgres/init/` actualizado, `postgres/scripts/hito3/normalizacion.sql` y los reportes del S16 sobre el esquema nuevo (`docs/hito3/hito3-evidencias.md`). |
 | **Hito 4** | Procedimiento almacenado y trigger, a partir de las reglas que el esquema todavía no garantiza (README, sección 4): máximo 3 préstamos activos, no prestar a un lector en mora, solo prestar ejemplares activos y todo libro con al menos un autor. La coherencia de perfiles ya quedó garantizada en el Hito 3. |
 | **Hito 5** | Roles de PostgreSQL con privilegios mínimos, API REST en Node.js y login con contraseñas bcrypt. La API puede leer los reportes de las 4 vistas que ya crea `reportes.sql` (por ejemplo, `biblioteca.reporte_prestamos_mora` para la lista con el botón "Enviar notificación"). |
