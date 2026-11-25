@@ -8,6 +8,7 @@
 | **Integrantes** | Eisin Yeiner Tobar Bravo · Giovanny Mora Segura |
 | **Hito 2** (entregado) | Esquema en PostgreSQL, carga masiva desde CSV (S14), los 4 reportes y el taller de consultas (S15/S16) |
 | **Hito 3** (entregado el 24/11/2026) | Documento de normalización, esquema actualizado en `postgres/init/` y migración `normalizacion.sql`; talleres S18, S19 y S20 (S17 a S20) |
+| **Hito 4** (en preparación, entrega el 30/11/2026) | Procedimientos `registrar_prestamo` y `registrar_devolucion`, trigger `prestamo_validar` y sus pruebas; talleres S21 y S22 (S21 y S22) |
 | **Motor** | PostgreSQL 16 sobre el entorno Docker del curso (probado en Windows con PowerShell 5.1) |
 
 Este README es la **bitácora del proyecto**. Explica qué se hizo, dónde está cada archivo, cómo levantar todo desde cero y qué decisiones se tomaron.
@@ -20,7 +21,8 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 |---|---|---|---|---|
 | **Hito 2**: esquema, carga desde CSV y los 4 reportes | S14 a S16 | [`postgres/scripts/hito2/`](postgres/scripts/hito2/) (taller S16 en [`taller-S16/`](postgres/scripts/hito2/taller-S16/)) y los CSV en [`postgres/scripts/datos/`](postgres/scripts/datos/) | [`docs/hito2/`](docs/hito2/): mapeo y criterios, evidencias y capturas | Secciones 4 a 9 |
 | **Hito 3**: normalización | S17 a S20 | [`postgres/scripts/hito3/`](postgres/scripts/hito3/) (talleres en [`taller-S18/`](postgres/scripts/hito3/taller-S18/), [`taller-S19/`](postgres/scripts/hito3/taller-S19/) y [`taller-S20/`](postgres/scripts/hito3/taller-S20/)) | [`docs/hito3/`](docs/hito3/): **documento de normalización**, evidencias y talleres S18, S19 y S20 | Secciones 10 a 13 |
-| Comunes | — | [`postgres/init/`](postgres/init/): el esquema, que corre solo con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 14 |
+| **Hito 4**: procedimiento y trigger | S21 y S22 | [`postgres/scripts/hito4/`](postgres/scripts/hito4/) (S21 en [`S21/`](postgres/scripts/hito4/S21/) y taller en [`taller-S22/`](postgres/scripts/hito4/taller-S22/)) y [`postgres/init/03_programacion.sql`](postgres/init/03_programacion.sql) | [`docs/hito4/`](docs/hito4/): respuestas del S22 y evidencias del Hito 4 | Secciones 14 y 15 |
+| Comunes | — | [`postgres/init/`](postgres/init/): el esquema y la lógica, que corren solos con la base vacía | [`docs/pendientes.md`](docs/pendientes.md) y [`docs/README-entorno-docker.md`](docs/README-entorno-docker.md) | Secciones 1 a 3 y 16 |
 
 ## Contenido
 
@@ -45,15 +47,20 @@ Cada hito tiene sus scripts en `postgres/scripts/hitoN/` y sus documentos en `do
 12. [Taller S20: desnormalización para rendimiento](#12-taller-s20-desnormalización-para-rendimiento)
 13. [Entrega del Hito 3: normalización del esquema](#13-entrega-del-hito-3-normalización-del-esquema)
 
+**Hito 4 (S21 y S22)**
+
+14. [Talleres S21 y S22: funciones, procedimientos y triggers](#14-talleres-s21-y-s22-funciones-procedimientos-y-triggers)
+15. [Lógica en la base de datos (Hito 4)](#15-lógica-en-la-base-de-datos-hito-4)
+
 **Cierre**
 
-14. [Lecciones aprendidas](#14-lecciones-aprendidas)
+16. [Lecciones aprendidas](#16-lecciones-aprendidas)
 
 ---
 
 ## 1. Estructura del repositorio
 
-La estructura parte del entorno Docker entregado por el profesor (`entorno-docker`), sin cambios en `docker-compose.yml`. Los scripts siguen dentro de `postgres/scripts/`, porque es la carpeta que Docker ve como `/scripts`; adentro están separados por hito. Los tres scripts del profesor (`S16-tienda.sql`, `S18-automotriz.sql` y `S19-esquemas.sql`) están sin cambios.
+La estructura parte del entorno Docker entregado por el profesor (`entorno-docker`), sin cambios en `docker-compose.yml`. Los scripts siguen dentro de `postgres/scripts/`, porque es la carpeta que Docker ve como `/scripts`; adentro están separados por hito. Los scripts del profesor (`S16-tienda.sql`, `S18-automotriz.sql`, `S19-esquemas.sql`, `S20-rendimiento.sql`, `S21-biblioteca-programable.sql` y `S22-reservas.sql`) están sin cambios.
 
 ```
 proyecto-biblioteca/
@@ -62,7 +69,8 @@ proyecto-biblioteca/
 ├── postgres/
 │   ├── init/                          ← se ejecuta SOLO, una vez, cuando la base está vacía
 │   │   ├── 01_esquema.sql             ← esquema "biblioteca" (biblioteca-v2 del S11, revisado en el Hito 3)
-│   │   └── 02_carga.sql               ← esquema "carga": bitácora de rechazos y tablas de paso
+│   │   ├── 02_carga.sql               ← esquema "carga": bitácora de rechazos y tablas de paso
+│   │   └── 03_programacion.sql        ← Hito 4: funciones, procedimientos y trigger (igual a hito4/programacion.sql)
 │   ├── scripts/                       ← se ejecutan a mano (dentro del contenedor: /scripts)
 │   │   ├── datos/                     ← 4 CSV semilla del curso + CSV propio del grupo
 │   │   ├── hito2/                     ← HITO 2 (S14 a S16)
@@ -75,18 +83,28 @@ proyecto-biblioteca/
 │   │   │   └── taller-S16/
 │   │   │       ├── S16-tienda.sql     ← esquema de práctica "tienda" (script del profesor)
 │   │   │       └── parte-a.sql        ← Parte A: los 11 ejercicios resueltos por el grupo
-│   │   └── hito3/                     ← HITO 3 (S17 a S20)
-│   │       ├── normalizacion.sql      ← Hito 3: migra una base con datos al esquema nuevo
-│   │       ├── parte-b-evidencia.sql  ← S19 parte B: evidencia sobre el esquema biblioteca
-│   │       ├── taller-S18/
-│   │       │   ├── S18-automotriz.sql ← planilla plana del taller "El Pistón" (script del profesor)
-│   │       │   └── normalizacion.sql  ← Parte B: la planilla llevada a 3FN, con verificación
-│   │       ├── taller-S19/
-│   │       │   ├── S19-esquemas.sql   ← cuatro esquemas mal diseñados (script del profesor)
-│   │       │   └── casos.sql          ← Parte A: diagnóstico, evidencia y migración de los 4 casos
-│   │       └── taller-S20/
-│   │           ├── S20-rendimiento.sql ← biblioteca "grande" para medir (script del profesor)
-│   │           └── a1-…a5-*.sql       ← Parte A: medir, indexar, desnormalizar (A1 a A5)
+│   │   ├── hito3/                     ← HITO 3 (S17 a S20)
+│   │   │   ├── normalizacion.sql      ← Hito 3: migra una base con datos al esquema nuevo
+│   │   │   ├── parte-b-evidencia.sql  ← S19 parte B: evidencia sobre el esquema biblioteca
+│   │   │   ├── taller-S18/
+│   │   │   │   ├── S18-automotriz.sql ← planilla plana del taller "El Pistón" (script del profesor)
+│   │   │   │   └── normalizacion.sql  ← Parte B: la planilla llevada a 3FN, con verificación
+│   │   │   ├── taller-S19/
+│   │   │   │   ├── S19-esquemas.sql   ← cuatro esquemas mal diseñados (script del profesor)
+│   │   │   │   └── casos.sql          ← Parte A: diagnóstico, evidencia y migración de los 4 casos
+│   │   │   └── taller-S20/
+│   │   │       ├── S20-rendimiento.sql ← biblioteca "grande" para medir (script del profesor)
+│   │   │       └── a1-…a5-*.sql       ← Parte A: medir, indexar, desnormalizar (A1 a A5)
+│   │   └── hito4/                     ← HITO 4 (S21 y S22)
+│   │       ├── programacion.sql       ← Hito 4: funciones, procedimientos y trigger
+│   │       ├── pruebas-programacion.sql ← Hito 4: un caso que pasa y uno que falla por regla
+│   │       ├── demo-hito4.sql         ← Hito 4: las 4 escenas de la evidencia (capturas o video)
+│   │       ├── S21/
+│   │       │   ├── S21-biblioteca-programable.sql ← esquema de la clase (script del profesor)
+│   │       │   └── S21-recorrido.sql  ← todos los ejemplos de la guía, en orden
+│   │       └── taller-S22/
+│   │           ├── S22-reservas.sql   ← reservas de salas (script del profesor)
+│   │           └── S22-grupo.sql      ← Parte A: A1 a A6 y el reto
 │   └── data/                          ← datos internos de PostgreSQL (no se suben a GitHub)
 ├── pgadmin/servers.json               ← conexión a PostgreSQL precargada en pgAdmin
 ├── node/                              ← API REST (Hito 5)
@@ -102,6 +120,8 @@ proyecto-biblioteca/
     │   ├── S19-taller-esquemas.md     ← taller S19: los 4 casos y la tabla del esquema (Parte B)
     │   ├── S19-salida-psql.txt        ← taller S19: salida de psql del Docker del grupo
     │   └── S20-taller-desnormalizacion.md ← taller S20, Parte A: mediciones y respuestas A1 a A5
+    ├── hito4/                         ← HITO 4
+    │   └── S22-taller-procedimientos-triggers.md ← taller S22, Parte A: respuestas
     ├── pendientes.md                  ← lo que falta (siguientes hitos)
     └── README-entorno-docker.md       ← README original del entorno del profesor
 ```
@@ -152,7 +172,16 @@ docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/taller-S19
 docker compose exec postgres psql -U curso -d curso -f /scripts/hito3/parte-b-evidencia.sql
 ```
 
-**6. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
+**6. Hito 4: la lógica en la base de datos** (sección 15). Una base creada desde cero con `init/` ya trae los procedimientos y el trigger (`03_programacion.sql`). En una base creada antes se instalan con el primer comando. Después se crean otra vez los préstamos de prueba (pasan por el trigger), se corre la batería de pruebas y, para la evidencia, la demo. Todo **el mismo día**:
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/programacion.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito2/datos-prueba.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/pruebas-programacion.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/demo-hito4.sql
+```
+Las pruebas y la demo terminan en `ROLLBACK`: no dejan cambios. Los talleres S21 y S22 (esquemas `programable` y `reservas`) están en la sección 14.
+
+**7. Revisar en pgAdmin:** abrir `http://localhost:5050`, entrar al servidor "Curso - PostgreSQL" (contraseña `curso`) e ir a *Databases → curso → Schemas*.
 
 **Reiniciar la base desde cero.** Hace falta cada vez que se cambia `01_esquema.sql` o `02_carga.sql`, porque `init/` solo corre con la base vacía. **Borra todos los datos.**
 ```powershell
@@ -181,6 +210,8 @@ En Linux o Mac, el segundo comando es `rm -rf postgres/data/pgdata`.
 | 22/11/2026 | **Taller S20, Parte A (desnormalización para rendimiento).** Sobre el esquema `rendimiento` del profesor (303 750 préstamos), en el Docker del grupo: el catálogo pasó de ~30 ms (sin índices) a ~4 ms con dos índices, sin redundancia, y a ~0,64 ms con la columna desnormalizada `disponibles`; el top 20, de ~195 ms a ~0,03 ms con una vista materializada. Se demostró la copia desincronizada (vista `descuadre`), el atraso de la vista materializada hasta el `REFRESH` y que `fecha_esperada` es un dato histórico si el plazo puede cambiar. Scripts en `postgres/scripts/hito3/taller-S20/`; respuestas en `docs/hito3/S20-taller-desnormalizacion.md`. |
 | 22/11/2026 | **Entrega del Hito 3.** El esquema ya estaba en FNBC (S19). Se aplicaron dos reglas de integridad: el perfil de `lector` y `bibliotecario` amarrado con una FK compuesta, y nombres de categoría y autor únicos sin distinguir mayúsculas. Se actualizó `postgres/init/01_esquema.sql`, se escribió la migración `postgres/scripts/hito3/normalizacion.sql` y se ajustó `carga-libros.sql`. En el Docker del grupo: migración con conteos iguales (21, 20, 1, 10 y 33) y `EXCEPT` en 0, el `init/` probado en la base aparte `prueba_init`, y los reportes del S16 sobre el esquema nuevo con 21, 2, 4 y 5 filas y verificación 9 de 9. Documento: `docs/hito3/hito3-documento-normalizacion.md`. |
 | 24/11/2026 | **Commit de entrega del Hito 3** («Entrega hito 3») en `main`, como lo pidió el profesor, y archivo `.txt` con el link del repositorio subido al campus. |
+| 24/11/2026 | **Taller S22, Parte A (entregado en el campus)** y recorrido de la clase S21. Sobre el esquema `reservas` del profesor: 4 `CHECK`, acciones `ON DELETE`, 2 funciones, 2 procedimientos, 2 triggers (`BEFORE` de validación y `AFTER` con `WHEN`), cierre por conjunto y el reto `EXCLUDE`. Las baterías dieron lo esperado en el Docker del grupo. Scripts en `postgres/scripts/hito4/`; respuestas en `docs/hito4/S22-taller-procedimientos-triggers.md`. |
+| 25/11/2026 | **Hito 4 preparado.** `programacion.sql` (también en `init/03_programacion.sql`): 4 funciones, los procedimientos `registrar_prestamo` y `registrar_devolucion` y el trigger `prestamo_validar`, cada uno amarrado a una regla de las secciones 3.1 y 3.2 del documento del proyecto. `pruebas-programacion.sql`: 23 casos sobre `datos-prueba.sql`, todos con el resultado esperado. `datos-prueba.sql` pasa completo con el trigger activo, los reportes del S16 siguen en 9 de 9 y el `init/` corre limpio en una base vacía. Falta la evidencia (capturas de `demo-hito4.sql`). |
 
 ---
 
@@ -221,11 +252,11 @@ Archivo: [`postgres/init/01_esquema.sql`](postgres/init/01_esquema.sql). Tiene 9
 
 **Reglas que el esquema NO garantiza** (candidatas a trigger en el Hito 4):
 
-- Todo libro tiene al menos un autor (participación total en una relación N:M). Hoy lo exige la carga.
-- Un lector tiene máximo 3 préstamos activos.
-- Un lector en mora no puede pedir préstamos.
+- Todo libro tiene al menos un autor (participación total en una relación N:M). Hoy lo exige la carga (sección 15).
+- ~~Un lector tiene máximo 3 préstamos activos.~~ **Garantizada desde el Hito 4** con el trigger `prestamo_validar` (sección 15).
+- ~~Un lector en mora no puede pedir préstamos.~~ **Garantizada desde el Hito 4** con el mismo trigger.
 - ~~Una fila de `lector` debe corresponder a un usuario con `perfil = 'lector'` (lo mismo para `bibliotecario`).~~ **Garantizada desde el Hito 3** con una FK compuesta (sección 13).
-- Solo se prestan ejemplares en estado `activo` a usuarios activos.
+- ~~Solo se prestan ejemplares en estado `activo` a usuarios activos.~~ **Desde el Hito 4:** la copia activa la exige el trigger; el lector activo, el procedimiento `registrar_prestamo` (sección 15).
 - El año de publicación no puede ser posterior al año actual. El `CHECK` usa 2100 fijo; el año actual lo valida la carga.
 
 ## 5. La carga desde CSV
@@ -585,7 +616,62 @@ No se desnormaliza `ejemplares_disponibles` ni el estado del préstamo: con nues
 
 ---
 
-## 14. Lecciones aprendidas
+## 14. Talleres S21 y S22: funciones, procedimientos y triggers
+
+**S21** es una clase magistral, sin entregable. [`postgres/scripts/hito4/S21/S21-recorrido.sql`](postgres/scripts/hito4/S21/S21-recorrido.sql) corre en orden todos los ejemplos de la guía sobre el esquema `programable`, con los resultados de la guía. Es la receta del Hito 4.
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/S21/S21-biblioteca-programable.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/S21/S21-recorrido.sql
+```
+
+**S22, Parte A** (entregada en el campus): el sistema de reservas de salas del profesor. [`S22-grupo.sql`](postgres/scripts/hito4/taller-S22/S22-grupo.sql) tiene A1 a A6 y el reto, con las baterías de la guía. Se corre **después** de `S22-reservas.sql`, que borra y recrea el esquema. Las respuestas están en [`docs/hito4/S22-taller-procedimientos-triggers.md`](docs/hito4/S22-taller-procedimientos-triggers.md).
+```powershell
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/taller-S22/S22-reservas.sql
+docker compose exec postgres psql -U curso -d curso -f /scripts/hito4/taller-S22/S22-grupo.sql
+```
+Una corrida limpia muestra 18 `ERROR`, todos en las pruebas que deben fallar (cada una anunciada con `>> … debe fallar`).
+
+---
+
+## 15. Lógica en la base de datos (Hito 4)
+
+Archivo: [`postgres/scripts/hito4/programacion.sql`](postgres/scripts/hito4/programacion.sql), con el mismo contenido en [`postgres/init/03_programacion.sql`](postgres/init/03_programacion.sql), para que una base nueva nazca con él. Cada objeto tiene arriba un comentario con la regla que implementa. Los objetos viven en el esquema `biblioteca`.
+
+| Objeto | Tipo | Tabla y evento | Regla que implementa (documento del proyecto) |
+|---|---|---|---|
+| `prestamos_activos(lector, fecha)` | Función | — | 3.2: máximo 3 préstamos activos (cuenta los abiertos en esa fecha) |
+| `prestamos_en_mora(lector, fecha)` | Función | — | 3.2: definición de mora (vencido y sin devolver; `<` estricto) |
+| `en_mora(lector, fecha)` | Función | — | 3.2: un lector con algún préstamo en mora no recibe préstamos |
+| `ejemplares_disponibles(isbn)` | Función | — | 3.1 y sección 4: disponibilidad del libro (copias activas sin préstamo abierto) |
+| `registrar_prestamo(doc_lector, isbn, doc_bibliotecario)` | Procedimiento | Inserta en `prestamo` | 3.1, punto 4: registrar un préstamo respetando la 3.2; lo registra un bibliotecario, con plazo de 14 días |
+| `registrar_devolucion(id_prestamo)` | Procedimiento | Actualiza `prestamo` | 3.1, punto 5: la devolución con sus efectos (retraso, disponibilidad y si el lector queda al día) |
+| `prestamo_validar` (función `validar_prestamo`) | Trigger `BEFORE` por fila | `prestamo`, `INSERT` | 3.2: no prestar a un lector en mora ni con 3 activos; solo copias activas de libros activos; completa el plazo de 14 días |
+
+**Decisiones del grupo:**
+- **Por qué un trigger y no solo el procedimiento:** el procedimiento cubre el caso de uso del mostrador, pero un `INSERT` directo (desde la API, una carga o pgAdmin) se lo saltaría. El trigger es la red de seguridad (S21, secciones 5.4 y 8). Los dos usan las **mismas funciones**, así que cada regla está escrita una sola vez.
+- **Las reglas se evalúan en la fecha del préstamo, no siempre hoy.** Así, un préstamo registrado con su fecha real se valida con la situación del lector en ese momento. Por eso `datos-prueba.sql` pasa completo con el trigger activo; con "hoy", el préstamo de Valentina de hace 10 días se habría rechazado, aunque cuando se hizo ella estaba al día. Para un préstamo de hoy, es exactamente la regla 3.2.
+- **Un préstamo que se registra ya devuelto es historia**, no un préstamo nuevo: el trigger lo deja pasar. El trigger valida al **insertar**; corregir un préstamo con `UPDATE` es una tarea administrativa, y el índice único parcial sigue impidiendo prestar dos veces la misma copia.
+- **No hay trigger "que marque la mora al vencer el plazo"** (el primer ejemplo de la sección 8 del documento): vencer un plazo no es un evento de la base, y un trigger nunca se dispararía (S21, sección 6.5). La mora se calcula al consultar.
+- **No hay trigger de mantenimiento:** en el Hito 3 no se desnormalizó nada, así que la disponibilidad y la mora se calculan y nunca se desactualizan.
+- **"Todo libro tiene al menos un autor" sigue en la carga:** el libro y su autor se insertan en sentencias distintas, así que la regla solo se puede revisar al final de la transacción (un trigger de restricción diferido). Queda fuera del alcance de este hito.
+
+**Pruebas** ([`pruebas-programacion.sql`](postgres/scripts/hito4/pruebas-programacion.sql)): 23 casos sobre los préstamos de `datos-prueba.sql`, al menos uno que pasa y uno que falla por regla. Probados en PostgreSQL 16, todos con el resultado esperado:
+- **`registrar_prestamo`**: 4 pasan (incluida Isabella, cuyo préstamo vence hoy y por eso no está en mora). Fallan, con un mensaje claro cada uno: lector inexistente, quien registra no es bibliotecario, libro inexistente, mora (Juan David y Valentina), máximo (Camila), sin copias libres (Pedro Páramo agotado), lector inactivo y libro dado de baja.
+- **Trigger, con `INSERT` directos:** rechaza la mora, el 4.º préstamo y la copia en reparación. El `CONTEXT` del error muestra `validar_prestamo()`. Deja pasar un préstamo correcto sin fecha de vencimiento (le pone hoy + 14) y uno histórico ya devuelto.
+- **`registrar_devolucion`**: Juan David devuelve sus dos libros (13 y 6 días de retraso) y queda al día; entonces el préstamo sí pasa. Fallan devolver dos veces y un préstamo inexistente.
+- Una corrida muestra **15 `ERROR`**, todos en casos que deben fallar (9 del procedimiento, 4 de `INSERT` directos y 2 de devoluciones), cada uno anunciado con `>> … debe fallar`.
+- Todo corre dentro de `BEGIN … ROLLBACK`, con `ON_ERROR_ROLLBACK` (psql deshace solo la sentencia que falla): al final la base queda en 30, 20, 10 y 5.
+
+| Pieza del checkpoint (S22) | Dónde quedó |
+|---|---|
+| Procedimiento almacenado funcional | `registrar_prestamo` y `registrar_devolucion` en `programacion.sql`; sus casos en `pruebas-programacion.sql` |
+| Trigger con propósito real de negocio | `prestamo_validar`: reglas 3.2 del documento del proyecto; no intenta reaccionar al paso del tiempo |
+| `init/` actualizado | `03_programacion.sql`, probado en una base vacía (`prueba_init`) |
+| Evidencia de funcionamiento | [`demo-hito4.sql`](postgres/scripts/hito4/demo-hito4.sql): 4 escenas con consulta antes, operación y consulta después. **Pendiente: las capturas del Docker del grupo** |
+
+---
+
+## 16. Lecciones aprendidas
 
 - **PowerShell no es bash.** `rm -rf` no existe: se usa `Remove-Item -Recurse -Force`. Un comando pegado varias veces en la misma línea falla, así que se copia y ejecuta **uno a la vez**.
 - **`docker compose` se ejecuta desde la carpeta del `docker-compose.yml`.** De lo contrario aparece `no configuration file provided`.
@@ -597,3 +683,5 @@ No se desnormaliza `ejemplares_disponibles` ni el estado del préstamo: con nues
 - **Un caso de prueba solo prueba algo si puede fallar.** El préstamo que "vence hoy" no se notaba en el reporte 3 porque su lector ya era moroso por otros préstamos: con `<` o con `<=` el reporte salía igual. Se aisló en una lectora sin otros préstamos abiertos, y se comprobó cambiando `<` por `<=` a propósito: la verificación lo detectó.
 - **Paginador de psql:** si aparece `(END)`, se sale con `q`. En consultas sueltas se evita con `-P pager=off`.
 - **pgAdmin no actualiza el árbol solo:** hay que recargar la página. El ícono `>_` abre el *PSQL Tool* (una terminal psql), no hace Refresh.
+- **Una regla con fechas se evalúa en la fecha del hecho.** El primer borrador del trigger miraba la mora de "hoy" y rechazaba préstamos de `datos-prueba.sql` que eran válidos el día en que se hicieron. Evaluar en `fecha_prestamo` arregla eso sin cambiar la regla para los préstamos de hoy.
+- **`ON_ERROR_ROLLBACK on`** permite probar, en una sola transacción, sentencias que deben fallar: psql deshace solo la que falla, y un `ROLLBACK` final deja la base como estaba.
